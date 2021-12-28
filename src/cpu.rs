@@ -1,3 +1,10 @@
+// TODO: Implement this in another MR.
+// Addressing Modes
+	// List of Addressing Modes in Enum listing
+
+// A Table-like reference to hold information about ops codes.
+// TODO: Implement this in another MR.
+
 pub struct CPU {
 	// -------- Registers --------
 	// Small
@@ -48,10 +55,52 @@ impl CPU {
 		}
 	}
 
-	// interpret interprets the incoming instructions.
-	// We need a mutable reference to the self, since the
-	// passed in value will change a register.
+	// reset will restore all of the registers and memory to default states.
+	// TODO: Implement this in another MR.
+
+	// load will load the program's ROM into the designated memory space.
+	// TODO: Implement this in another MR.
+
+	// mem_read will read 2 bytes of whats at a memory position.
+	// TODO: Implement this in another MR.
+
+	// mem_write will write 2 bytes to a memory position.
+	// TODO: Implement this in another MR.
+
+	// mem_read_u16 will read 4 bytes of whats at a memory position.
+	// This function assumes data is stored in little endian.
+	// TODO: Implement this in another MR.
+
+	// mem_write_u16 will write  4 bytes to a memory position.
+	// This function assumes data is stored in little endian.
+	// TODO: Implement this in another MR.
+
+	// get_operand_address determines how an address should be read.
+	// It is determined based off of the Addressing mode.
+	// TODO: Implement this in another MR.
+
+	/*
+	 * interpret interprets the incoming instructions.
+	 * The basic loop is:
+	 * - fetch instruction from instruction memory
+	 * - decode the instruction
+	 * - execute the instruction
+	 * - go back to first step
+	 * 
+	 * We need a mutable reference to the self, since the
+	 * passed in value will change a register.
+	 */
 	pub fn interpret(&mut self, program: Vec<u8>) {
-		// fill it in
+		// Set the pc to 0, the start point.
+
+		// Start the loop.
+			// Get the ops code from the pc.
+
+			// Increment the pc.
+
+			// Execute based off of the ops code
+				// Handle ops code 1
+
+				// Handle ops code 2
 	}
 }

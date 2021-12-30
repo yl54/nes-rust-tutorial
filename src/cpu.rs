@@ -51,7 +51,8 @@ pub struct CPU {
 	pub mem: [u8; 0xFFFF],
 
 
-	// TODO: Consider having a handler object per ops code.
+	// Q: Is it worth having a handler object per ops code?
+	// A: Probably not. The logic is too interwined with the CPU.
 }
 
 impl CPU {
@@ -152,6 +153,34 @@ impl CPU {
 					}
 				}
 
+				// Handle ops code TAX
+				// TAX copies the value from the A register to the X register.
+				0xAA => {
+					// Copy the value from A register into the X register.
+					self.x = self.a;
+
+					// ---- Change the Processor Status Flags based off of the new A value -----
+					
+					// Check if the A register is 0.
+					if self.a == 0 {
+						// If 0, set the zero flag to 1.
+						self.p = self.p | 0b0000_0010;
+					} else {
+						// If not, set the zero flag to 0.
+						self.p = self.p & 0b1111_1101;
+					}
+
+					// Check if the A register is less than 0.
+					// It checks if the 7 bit of the a register value is set. If it's set, it's a negative number.
+					if self.a & 0b1000_0000 != 0 {
+						// If < 0, set the negative flag to 1.
+						self.p = self.p | 0b1000_0000;
+					} else {
+						// If >= 0, set the negative flag to 0.
+						self.p = self.p & 0b0111_1111;
+					}
+				}
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -177,13 +206,15 @@ impl CPU {
 mod test {
     use super::*;
 
+    // -------- LDA --------
+
     #[test]
     fn test_LDA_happy_path() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
         // Interpret a short program.
-        // 1. Load a value into A register.
+        // 1. Load a positive value into A register.
         // 2. Break.
         cpu.interpret(vec![0xa9, 0x05, 0x00]);
 
@@ -197,6 +228,20 @@ mod test {
         // Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0000 == 0);
     }
+
+    // test LDA negative value
+        // Create a CPU.
+
+        // TODO: Change this logic so that the loaded value is  negative value is set.
+        // Interpret a short program.
+        // 1. Load a negative value into A register.
+        // 2. Break.
+
+        // Check the A register has the expected value.
+
+        // Check the Zero Flag is not set.
+
+        // Check the Negative Flag is set.
 
     #[test]
     fn test_LDA_zero() {
@@ -217,4 +262,21 @@ mod test {
         // Check the Negative Flag is not set.
         assert!(cpu.p & 0b0000_0000 == 0);
     }
+
+    // -------- TAX --------
+
+    // test TAX happy path
+    	// Create a CPU.
+
+    	// Interpret a short program.
+    	// 1. Load a positive value into the A register.
+    	// 2. Copy value from A register into X register.
+    	// 3. Break.
+
+    	// Check the A register has the expected value.
+        
+        // Check the Zero Flag is not set.
+        
+        // Check the Negative Flag is not set.
+
 }

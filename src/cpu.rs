@@ -142,6 +142,7 @@ impl CPU {
 					}
 
 					// Check if the A register is less than 0.
+					// q: I don't understand this fully.
 					if self.a & 0b1000_0000 != 0 {
 						// If < 0, set the negative flag to 1.
 						self.p = self.p | 0b1000_0000;
@@ -164,4 +165,50 @@ impl CPU {
 			}
 		}
 	}
+}
+
+/* Typically, unit tests are listed below the actual code in the file.
+ * This is how rust works. It doesn't work if I put the test in a separate file.
+ */
+
+#[cfg(test)]
+mod test {
+    // import a super library?
+    use super::*;
+
+    // test LDA happy path
+    #[test]
+    fn test_LDA_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Interpret a short program.
+        // 1. Load a value into A register.
+        // 2. Break.
+        cpu.interpret(vec![0xa9, 0x05, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check the Zero Flag is not set.
+        // Q: What is the difference between 0b00 and 0? 
+        assert!(cpu.p & 0b0000_0010 == 0b00);
+
+        // Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0000 == 0);
+    }
+
+
+    // test LDA zero flag
+        // Create a CPU.
+
+        // Interpret a short program.
+        // 1. Load zero into A register.
+        // 2. Break.
+
+        // Check the A register has the expected value.
+
+        // Check the Zero Flag is set.
+
+        // Check the Negative Flag is not set.
 }

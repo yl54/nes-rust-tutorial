@@ -30,15 +30,28 @@ pub struct CPU {
 	// Similar to X.
 	pub y: u8,
 
-	// P - Processor Status
-	// 8 bit register represents 7 status flags.
-	// Each one is toggled depending on operation.
+	/* P - Processor Status
+	 * 8 bit register represents 7 status flags.
+	 * Each one is toggled depending on operation.
+	 * 
+	 * 7 N Negative
+	 * 6 V Overflow
+	 * 5 - (Expansion)
+	 * 4 B Break Command
+	 * 3 D Decimal
+	 * 2 I Interrupt Disable
+	 * 1 Z Zero
+	 * 0 C Carry
+	 */
 	pub p: u8,
 	
 	// -------- Memory --------
 	// Slow
 	// Larger
 	pub mem: [u8; 0xFFFF],
+
+
+	// TODO: Consider having a handler object per ops code.
 }
 
 impl CPU {
@@ -92,15 +105,63 @@ impl CPU {
 	 */
 	pub fn interpret(&mut self, program: Vec<u8>) {
 		// Set the pc to 0, the start point.
+		self.pc = 0;
 
 		// Start the loop.
+		loop {
 			// Get the ops code from the pc.
+			// q: why convert from u16 to usize?
+			let opscode = program[self.pc as usize];
 
-			// Increment the pc.
+			// Increment pc.
+			self.pc += 1;
 
-			// Execute based off of the ops code
-				// Handle ops code 1
+			// Execute based off of the ops code.
+			match opscode {
+				// Handle ops code LDA (0xA9).
+				// LDA is Load Accumulator.
+				0xA9 => {
+					// Get the param input from the next instruction.
+					let param = program[self.pc as usize];
 
-				// Handle ops code 2
+					// Increment pc.
+					self.pc += 1;
+
+					// Fill the A register with the param.
+					self.a = param;
+
+					// ---- Change the Processor Status Flags based off of the new A value -----
+					
+					// Check if the A register is 0.
+					if self.a == 0 {
+						// If 0, set the zero flag to 1.
+						self.p = self.p | 0b0000_0010;
+					} else {
+						// If not, set the zero flag to 0.
+						self.p = self.p & 0b1111_1101;
+					}
+
+					// Check if the A register is less than 0.
+					if self.a & 0b1000_0000 != 0 {
+						// If < 0, set the negative flag to 1.
+						self.p = self.p | 0b1000_0000;
+					} else {
+						// If >= 0, set the negative flag to 0.
+						self.p = self.p & 0b0111_1111;
+					}
+				}
+
+				// Handle ops code BRK (0x00).
+				// BRK is the break command. It causes an
+				// interrupt sequence. The program transfers control to the 
+				// interrupt vector.
+				0x00 => {
+					return;
+				}
+
+				// Handle ops code 2.
+				_ => {}
+			}
+		}
 	}
 }

@@ -120,7 +120,6 @@ impl CPU {
 			// Execute based off of the ops code.
 			match opscode {
 				// Handle ops code LDA (0xA9).
-				// LDA is Load Accumulator.
 				0xA9 => {
 					// Get the param input from the next instruction.
 					let param = program[self.pc as usize];
@@ -128,22 +127,11 @@ impl CPU {
 					// Increment pc.
 					self.pc += 1;
 
-					// Fill the A register with the param.
-					self.a = param;
-
-					// Change the Processor Status Flags based off of the new A value
-					self.update_processor_flags(self.a);
+					self.lda(param);
 				}
 
 				// Handle ops code TAX (0xAA)
-				// TAX copies the value from the A register to the X register.
-				0xAA => {
-					// Copy the value from A register into the X register.
-					self.x = self.a;
-
-					// Change the Processor Status Flags based off of the new X value
-					self.update_processor_flags(self.x);
-				}
+				0xAA => self.tax(),
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -161,12 +149,27 @@ impl CPU {
 
 	// -------- Handle Opscodes --------
 
-	// TODO: Create a function for LDA
+	// lda handles ops code LDA (0xA9).
+	// LDA is Load Accumulator.
+	fn lda(&mut self, value: u8) {
+		// Fill the A register with the param.
+		self.a = value;
 
-	// TODO: Create a function for TAX
+		// Change the Processor Status Flags based off of the new A value
+		self.update_processor_flags(self.a);
+	}
 
-	// TODO: Create a function to update the processor flags.
-	// ---- Change the Processor Status Flags based off of the new A value -----
+	// tax handles the ops code TAX (0xAA).
+	// TAX copies the value from the A register to the X register.
+	fn tax(&mut self) {
+		// Copy the value from A register into the X register.
+		self.x = self.a;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
+
+	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
 		if result == 0 {

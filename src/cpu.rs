@@ -153,7 +153,7 @@ impl CPU {
 					}
 				}
 
-				// Handle ops code TAX
+				// Handle ops code TAX (0xAA)
 				// TAX copies the value from the A register to the X register.
 				0xAA => {
 					// Copy the value from A register into the X register.
@@ -268,17 +268,23 @@ mod test {
     // -------- TAX --------
 
     // test TAX happy path
+    #[test]
+    fn test_TAX_happy_path() {
     	// Create a CPU.
+    	let mut cpu = CPU::new();
 
     	// Interpret a short program.
     	// 1. Load a positive value into the A register.
     	// 2. Copy value from A register into X register.
     	// 3. Break.
+    	cpu.interpret(vec![0xa9, 0x05, 0xaa, 0x00]);
 
-    	// Check the A register has the expected value.
+    	// Check the X register has the expected value.
+    	assert_eq!(cpu.x, 0x05);
         
-        // Check the Zero Flag is not set.
-        
-        // Check the Negative Flag is not set.
-
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 }

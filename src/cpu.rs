@@ -194,6 +194,14 @@ impl CPU {
 			}
 		}
 	}
+
+	// -------- Handle Opscodes --------
+
+	// TODO: Create a function for LDA
+
+	// TODO: Create a function for TAX
+
+	// TODO: Create a function to update the processor flags.
 }
 
 // --------- Tests ---------
@@ -267,7 +275,6 @@ mod test {
 
     // -------- TAX --------
 
-    // test TAX happy path
     #[test]
     fn test_TAX_happy_path() {
     	// Create a CPU.

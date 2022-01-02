@@ -5,6 +5,10 @@
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
 
+// Q: Is it worth having a handler object per ops code?
+// A: Probably not. The logic is too interwined with the CPU.
+
+// CPU emulates a 6502 CPU.
 pub struct CPU {
 	// -------- Registers --------
 	// Small
@@ -49,9 +53,6 @@ pub struct CPU {
 	// Slow
 	// Larger
 	pub mem: [u8; 0xFFFF],
-
-
-	// TODO: Consider having a handler object per ops code.
 }
 
 impl CPU {
@@ -152,6 +153,34 @@ impl CPU {
 					}
 				}
 
+				// Handle ops code TAX (0xAA)
+				// TAX copies the value from the A register to the X register.
+				0xAA => {
+					// Copy the value from A register into the X register.
+					self.x = self.a;
+
+					// ---- Change the Processor Status Flags based off of the new A value -----
+					
+					// Check if the A register is 0.
+					if self.a == 0 {
+						// If 0, set the zero flag to 1.
+						self.p = self.p | 0b0000_0010;
+					} else {
+						// If not, set the zero flag to 0.
+						self.p = self.p & 0b1111_1101;
+					}
+
+					// Check if the A register is less than 0.
+					// It checks if the 7 bit of the a register value is set. If it's set, it's a negative number.
+					if self.a & 0b1000_0000 != 0 {
+						// If < 0, set the negative flag to 1.
+						self.p = self.p | 0b1000_0000;
+					} else {
+						// If >= 0, set the negative flag to 0.
+						self.p = self.p & 0b0111_1111;
+					}
+				}
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -165,6 +194,14 @@ impl CPU {
 			}
 		}
 	}
+
+	// -------- Handle Opscodes --------
+
+	// TODO: Create a function for LDA
+
+	// TODO: Create a function for TAX
+
+	// TODO: Create a function to update the processor flags.
 }
 
 // --------- Tests ---------
@@ -177,25 +214,44 @@ impl CPU {
 mod test {
     use super::*;
 
+    // -------- LDA --------
+
     #[test]
     fn test_LDA_happy_path() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
         // Interpret a short program.
-        // 1. Load a value into A register.
+        // 1. Load a positive value into A register.
         // 2. Break.
         cpu.interpret(vec![0xa9, 0x05, 0x00]);
 
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x05);
 
-        // Check the Zero Flag is not set.
-        // Q: What is the difference between 0b00 and 0? 
-        assert!(cpu.p & 0b0000_0010 == 0b00);
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
-        // Check the Negative Flag is not set.
-        assert!(cpu.p & 0b1000_0000 == 0);
+    #[test]
+    fn test_LDA_negative_input() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Interpret a short program.
+        // 1. Load a negative value into A register.
+        // 2. Break.
+        cpu.interpret(vec![0xa9, 0xf5, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf5);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
     }
 
     #[test]
@@ -211,10 +267,31 @@ mod test {
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x00);
 
-        // Check the Zero Flag is set.
-        assert!(cpu.p & 0b0000_0000 == 0);
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
 
-        // Check the Negative Flag is not set.
-        assert!(cpu.p & 0b0000_0000 == 0);
+    // -------- TAX --------
+
+    #[test]
+    fn test_TAX_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Interpret a short program.
+    	// 1. Load a positive value into the A register.
+    	// 2. Copy value from A register into X register.
+    	// 3. Break.
+    	cpu.interpret(vec![0xa9, 0x05, 0xaa, 0x00]);
+
+    	// Check the X register has the expected value.
+    	assert_eq!(cpu.x, 0x05);
+        
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 }

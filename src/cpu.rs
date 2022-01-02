@@ -5,6 +5,10 @@
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
 
+// Q: Is it worth having a handler object per ops code?
+// A: Probably not. The logic is too interwined with the CPU.
+
+// CPU emulates a 6502 CPU.
 pub struct CPU {
 	// -------- Registers --------
 	// Small
@@ -49,10 +53,6 @@ pub struct CPU {
 	// Slow
 	// Larger
 	pub mem: [u8; 0xFFFF],
-
-
-	// Q: Is it worth having a handler object per ops code?
-	// A: Probably not. The logic is too interwined with the CPU.
 }
 
 impl CPU {
@@ -221,27 +221,30 @@ mod test {
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x05);
 
-        // Check the Zero Flag is not set.
-        // Q: What is the difference between 0b00 and 0? 
-        assert!(cpu.p & 0b0000_0010 == 0b00);
-
-        // Check the Negative Flag is not set.
-        assert!(cpu.p & 0b1000_0000 == 0);
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
-    // test LDA negative value
+    #[test]
+    fn test_LDA_negative_input() {
         // Create a CPU.
+        let mut cpu = CPU::new();
 
-        // TODO: Change this logic so that the loaded value is  negative value is set.
         // Interpret a short program.
         // 1. Load a negative value into A register.
         // 2. Break.
+        cpu.interpret(vec![0xa9, 0xf5, 0x00]);
 
         // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf5);
 
-        // Check the Zero Flag is not set.
-
-        // Check the Negative Flag is set.
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
 
     #[test]
     fn test_LDA_zero() {
@@ -256,11 +259,10 @@ mod test {
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x00);
 
-        // Check the Zero Flag is set.
-        assert!(cpu.p & 0b0000_0000 == 0);
-
-        // Check the Negative Flag is not set.
-        assert!(cpu.p & 0b0000_0000 == 0);
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
     // -------- TAX --------

@@ -120,7 +120,6 @@ impl CPU {
 			// Execute based off of the ops code.
 			match opscode {
 				// Handle ops code LDA (0xA9).
-				// LDA is Load Accumulator.
 				0xA9 => {
 					// Get the param input from the next instruction.
 					let param = program[self.pc as usize];
@@ -128,58 +127,11 @@ impl CPU {
 					// Increment pc.
 					self.pc += 1;
 
-					// Fill the A register with the param.
-					self.a = param;
-
-					// ---- Change the Processor Status Flags based off of the new A value -----
-					
-					// Check if the A register is 0.
-					if self.a == 0 {
-						// If 0, set the zero flag to 1.
-						self.p = self.p | 0b0000_0010;
-					} else {
-						// If not, set the zero flag to 0.
-						self.p = self.p & 0b1111_1101;
-					}
-
-					// Check if the A register is less than 0.
-					// It checks if the 7 bit of the a register value is set. If it's set, it's a negative number.
-					if self.a & 0b1000_0000 != 0 {
-						// If < 0, set the negative flag to 1.
-						self.p = self.p | 0b1000_0000;
-					} else {
-						// If >= 0, set the negative flag to 0.
-						self.p = self.p & 0b0111_1111;
-					}
+					self.lda(param);
 				}
 
 				// Handle ops code TAX (0xAA)
-				// TAX copies the value from the A register to the X register.
-				0xAA => {
-					// Copy the value from A register into the X register.
-					self.x = self.a;
-
-					// ---- Change the Processor Status Flags based off of the new A value -----
-					
-					// Check if the A register is 0.
-					if self.a == 0 {
-						// If 0, set the zero flag to 1.
-						self.p = self.p | 0b0000_0010;
-					} else {
-						// If not, set the zero flag to 0.
-						self.p = self.p & 0b1111_1101;
-					}
-
-					// Check if the A register is less than 0.
-					// It checks if the 7 bit of the a register value is set. If it's set, it's a negative number.
-					if self.a & 0b1000_0000 != 0 {
-						// If < 0, set the negative flag to 1.
-						self.p = self.p | 0b1000_0000;
-					} else {
-						// If >= 0, set the negative flag to 0.
-						self.p = self.p & 0b0111_1111;
-					}
-				}
+				0xAA => self.tax(),
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -197,11 +149,47 @@ impl CPU {
 
 	// -------- Handle Opscodes --------
 
-	// TODO: Create a function for LDA
+	// lda handles ops code LDA (0xA9).
+	// LDA is Load Accumulator.
+	fn lda(&mut self, value: u8) {
+		// Fill the A register with the param.
+		self.a = value;
 
-	// TODO: Create a function for TAX
+		// Change the Processor Status Flags based off of the new A value
+		self.update_processor_flags(self.a);
+	}
 
-	// TODO: Create a function to update the processor flags.
+	// tax handles the ops code TAX (0xAA).
+	// TAX copies the value from the A register to the X register.
+	fn tax(&mut self) {
+		// Copy the value from A register into the X register.
+		self.x = self.a;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
+
+	// update_processor_flags change the Processor Status Flags based off of the new A values
+	fn update_processor_flags(&mut self, result: u8) {
+		// Check if the A register is 0.
+		if result == 0 {
+			// If 0, set the zero flag to 1.
+			self.p = self.p | 0b0000_0010;
+		} else {
+			// If not, set the zero flag to 0.
+			self.p = self.p & 0b1111_1101;
+		}
+
+		// Check if the A register is less than 0.
+		// It checks if the 7 bit of the a register value is set. If it's set, it's a negative number.
+		if result & 0b1000_0000 != 0 {
+			// If < 0, set the negative flag to 1.
+			self.p = self.p | 0b1000_0000;
+		} else {
+			// If >= 0, set the negative flag to 0.
+			self.p = self.p & 0b0111_1111;
+		}
+	}
 }
 
 // --------- Tests ---------

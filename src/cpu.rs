@@ -74,12 +74,31 @@ impl CPU {
 
 	// load will load the program's ROM into the designated memory space.
 	// TODO: Implement this in another MR.
+	pub fn load_and_run(&mut self, program: Vec<u8>) {
+		self.load(program);
+		self.run();
+	}
+
+	// load copies the program into memory space, and resets the pc.
+	pub fn load(&mut self, program: Vec<u8>) {
+		// Copy the program bytes into the memory space.
+		self.mem[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
+
+		// Put the Program Counter at the beginning of the meemory space.
+		self.pc = 0x8000;
+	}
 
 	// mem_read will read 2 bytes of whats at a memory position.
 	// TODO: Implement this in another MR.
+	fn mem_read(&self, addr: u16) -> u8 {
+		self.mem[addr as usize]
+	}
 
 	// mem_write will write 2 bytes to a memory position.
 	// TODO: Implement this in another MR.
+	fn mem_write(&mut self, addr: u16, data: u8) {
+		self.mem[addr as usize] = data;
+	}
 
 	// mem_read_u16 will read 4 bytes of whats at a memory position.
 	// This function assumes data is stored in little endian.
@@ -104,15 +123,12 @@ impl CPU {
 	 * We need a mutable reference to the self, since the
 	 * passed in value will change a register.
 	 */
-	pub fn interpret(&mut self, program: Vec<u8>) {
-		// Set the pc to 0, the start point.
-		self.pc = 0;
-
+	pub fn run(&mut self) {
 		// Start the loop.
 		loop {
 			// Get the ops code from the pc.
 			// q: why convert from u16 to usize?
-			let opscode = program[self.pc as usize];
+			let opscode = self.mem_read(self.pc);
 
 			// Increment pc.
 			self.pc += 1;
@@ -122,7 +138,7 @@ impl CPU {
 				// Handle ops code LDA (0xA9).
 				0xA9 => {
 					// Get the param input from the next instruction.
-					let param = program[self.pc as usize];
+					let param = self.mem_read(self.pc);
 
 					// Increment pc.
 					self.pc += 1;
@@ -209,10 +225,10 @@ mod test {
         // Create a CPU.
         let mut cpu = CPU::new();
 
-        // Interpret a short program.
+        // Load and run a short program.
         // 1. Load a positive value into A register.
         // 2. Break.
-        cpu.interpret(vec![0xa9, 0x05, 0x00]);
+        cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
 
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x05);
@@ -228,10 +244,10 @@ mod test {
         // Create a CPU.
         let mut cpu = CPU::new();
 
-        // Interpret a short program.
+        // Load and run a short program.
         // 1. Load a negative value into A register.
         // 2. Break.
-        cpu.interpret(vec![0xa9, 0xf5, 0x00]);
+        cpu.load_and_run(vec![0xa9, 0xf5, 0x00]);
 
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0xf5);
@@ -247,10 +263,10 @@ mod test {
         // Create a CPU.
         let mut cpu = CPU::new();
 
-        // Interpret a short program.
+        // Load and run a short program.
         // 1. Load zero into A register.
         // 2. Break.
-        cpu.interpret(vec![0xa9, 0x00, 0x00]);
+        cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
 
         // Check the A register has the expected value.
         assert_eq!(cpu.a, 0x00);
@@ -268,11 +284,11 @@ mod test {
     	// Create a CPU.
     	let mut cpu = CPU::new();
 
-    	// Interpret a short program.
+        // Load and run a short program.
     	// 1. Load a positive value into the A register.
     	// 2. Copy value from A register into X register.
     	// 3. Break.
-    	cpu.interpret(vec![0xa9, 0x05, 0xaa, 0x00]);
+    	cpu.load_and_run(vec![0xa9, 0x05, 0xaa, 0x00]);
 
     	// Check the X register has the expected value.
     	assert_eq!(cpu.x, 0x05);

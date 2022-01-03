@@ -70,12 +70,32 @@ impl CPU {
 	}
 
 	// reset will restore all of the registers and memory to default states.
+	// When a new cartrigee is insertedd, the CPU recieves a special signal to:
+	// - Reset the state of all registers and flags.
+	// - Set the pc to the 16 bit address stored at 0xFFFC.
 	// TODO: Implement this in another MR.
+	pub fn reset(&mut self) {
+		// Set A register to 0.
+		self.a = 0;
+
+		// Set X register to 0.
+		self.x = 0;
+
+		// Set Y register to 0.
+		self.y = 0;
+
+		// Set Processor Status register to 0.
+		self.p = 0;
+
+		// Set PC to the value stored at 0xFFFC.
+		self.pc = self.mem_read_u16(0xFFFC);
+	}
 
 	// load will load the program's ROM into the designated memory space.
 	// TODO: Implement this in another MR.
 	pub fn load_and_run(&mut self, program: Vec<u8>) {
 		self.load(program);
+		self.reset();
 		self.run();
 	}
 
@@ -84,8 +104,9 @@ impl CPU {
 		// Copy the program bytes into the memory space.
 		self.mem[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
 
-		// Put the Program Counter at the beginning of the meemory space.
-		self.pc = 0x8000;
+		// Set the address 0xFFFC to the beginning of the program.
+		// 0xFFFC is where the NES expects the address to be.
+		self.mem_write_u16(0xFFFC, 0x8000);
 	}
 
 	// mem_read will read 2 bytes of whats at a memory position.
@@ -103,10 +124,23 @@ impl CPU {
 	// mem_read_u16 will read 4 bytes of whats at a memory position.
 	// This function assumes data is stored in little endian.
 	// TODO: Implement this in another MR.
+	fn mem_read_u16(&mut self, addr: u16) -> u16 {
+		let low = self.mem_read(addr) as u16;
+		let high = self.mem_read(addr + 1) as u16;
 
-	// mem_write_u16 will write  4 bytes to a memory position.
+		// q: I don't quite understand this. why?
+		(high << 8) | (low as u16)
+	}
+
+	// mem_write_u16 will write 4 bytes to a memory position.
 	// This function assumes data is stored in little endian.
 	// TODO: Implement this in another MR.
+	fn mem_write_u16(&mut self, addr: u16, value: u16) {
+		let high = (value >> 8) as u8;
+		let low = (value & 0xff) as u8;
+		self.mem_write(addr, low);
+		self.mem_write(addr + 1, high);
+	}
 
 	// get_operand_address determines how an address should be read.
 	// It is determined based off of the Addressing mode.

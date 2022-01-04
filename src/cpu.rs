@@ -276,12 +276,25 @@ mod test {
     }
 
     // load_and_run
+    #[test]
     fn test_load_and_run() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
 
+    	// Load and run an empty program.
+    	cpu.load_and_run(vec![0x00]);
+
+    	// Check that the PC is set to 0x8000.
+    	assert_eq!(cpu.pc, 0x8001);
+
+    	// Check that the other registers are expected.
+    	assert_eq!(cpu.a, 0);
+    	assert_eq!(cpu.x, 0);
+    	assert_eq!(cpu.y, 0);
+    	assert_eq!(cpu.p, 0);
     }
 
     // load
-
 
     // mem_read
 

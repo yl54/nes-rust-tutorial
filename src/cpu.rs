@@ -70,7 +70,7 @@ impl CPU {
 	}
 
 	// reset will restore all of the registers and memory to default states.
-	// When a new cartrigee is insertedd, the CPU recieves a special signal to:
+	// When a new cartrigee is inserted, the CPU recieves a special signal to:
 	// - Reset the state of all registers and flags.
 	// - Set the pc to the 16 bit address stored at 0xFFFC.
 	// 
@@ -256,6 +256,7 @@ mod test {
     // -------- Internal Functions --------
 
     // reset
+    #[test]
     fn test_reset() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
@@ -263,8 +264,9 @@ mod test {
     	// Call reset on the CPU.
     	cpu.reset();
 
-    	// Check that the PC is set to 0x8000.
-    	assert_eq!(cpu.pc, 0x8000);
+    	// Check that the PC is set to 0.
+    	// In a real execution, self.pc should be 0x8000, but this is an isolated unit test. 
+    	assert_eq!(cpu.pc, 0);
 
     	// Check that the other registers are set to 0.
     	assert_eq!(cpu.a, 0);
@@ -274,8 +276,12 @@ mod test {
     }
 
     // load_and_run
+    fn test_load_and_run() {
+
+    }
 
     // load
+
 
     // mem_read
 

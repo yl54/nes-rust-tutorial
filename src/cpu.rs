@@ -73,7 +73,8 @@ impl CPU {
 	// When a new cartrigee is insertedd, the CPU recieves a special signal to:
 	// - Reset the state of all registers and flags.
 	// - Set the pc to the 16 bit address stored at 0xFFFC.
-	// TODO: Implement this in another MR.
+	// 
+	// reset does not change what is stored in memory.
 	pub fn reset(&mut self) {
 		// Set A register to 0.
 		self.a = 0;
@@ -251,6 +252,38 @@ impl CPU {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    // -------- Internal Functions --------
+
+    // reset
+    fn test_reset() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Call reset on the CPU.
+    	cpu.reset();
+
+    	// Check that the PC is set to 0x8000.
+    	assert_eq!(cpu.pc, 0x8000);
+
+    	// Check that the other registers are set to 0.
+    	assert_eq!(cpu.a, 0);
+    	assert_eq!(cpu.x, 0);
+    	assert_eq!(cpu.y, 0);
+    	assert_eq!(cpu.p, 0);
+    }
+
+    // load_and_run
+
+    // load
+
+    // mem_read
+
+    // mem_write
+
+    // mem_read_u16
+
+    // mem_write_u16
 
     // -------- LDA --------
 

@@ -93,7 +93,6 @@ impl CPU {
 	}
 
 	// load will load the program's ROM into the designated memory space.
-	// TODO: Implement this in another MR.
 	pub fn load_and_run(&mut self, program: Vec<u8>) {
 		self.load(program);
 		self.reset();
@@ -111,20 +110,17 @@ impl CPU {
 	}
 
 	// mem_read will read 2 bytes of whats at a memory position.
-	// TODO: Implement this in another MR.
 	fn mem_read(&self, addr: u16) -> u8 {
 		self.mem[addr as usize]
 	}
 
 	// mem_write will write 2 bytes to a memory position.
-	// TODO: Implement this in another MR.
 	fn mem_write(&mut self, addr: u16, data: u8) {
 		self.mem[addr as usize] = data;
 	}
 
 	// mem_read_u16 will read 4 bytes of whats at a memory position.
 	// This function assumes data is stored in little endian.
-	// TODO: Implement this in another MR.
 	fn mem_read_u16(&mut self, addr: u16) -> u16 {
 		let low = self.mem_read(addr) as u16;
 		let high = self.mem_read(addr + 1) as u16;
@@ -135,7 +131,6 @@ impl CPU {
 
 	// mem_write_u16 will write 4 bytes to a memory position.
 	// This function assumes data is stored in little endian.
-	// TODO: Implement this in another MR.
 	fn mem_write_u16(&mut self, addr: u16, value: u16) {
 		let high = (value >> 8) as u8;
 		let low = (value & 0xff) as u8;
@@ -255,7 +250,6 @@ mod test {
 
     // -------- Internal Functions --------
 
-    // reset
     #[test]
     fn test_reset() {
     	// Create a CPU.
@@ -275,9 +269,8 @@ mod test {
     	assert_eq!(cpu.p, 0);
     }
 
-    // load_and_run
     #[test]
-    fn test_load_and_run() {
+    fn test_load_and_run_happy_path() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
 
@@ -294,7 +287,28 @@ mod test {
     	assert_eq!(cpu.p, 0);
     }
 
-    // load
+    #[test]
+    fn test_load_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Create a fake program.
+    	let program = vec![0x34, 0x54, 0x12, 0x96];
+
+    	// Need a clone because the ownership of program will be moved into the load function.
+    	let program_clone = program.clone();
+
+    	// Load a fake program.
+    	cpu.load(program);
+
+    	// Check the contents of whats on memory.
+    	for n in 0..3 {
+    		assert_eq!(cpu.mem_read(0x8000 + n), program_clone[n as usize]);
+    	}
+
+    	// Check the value on the address 0xFCCC.
+    	assert_eq!(cpu.mem_read_u16(0xFFFC), 0x8000 as u16);
+    }
 
     // mem_read
 

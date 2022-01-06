@@ -311,6 +311,17 @@ mod test {
     }
 
     // mem_read
+    #[test]
+    fn test_mem_read_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Put a fake program on a single space in memory.
+    	cpu.mem[0x5000] = 0x86;
+
+    	// Use mem_read on the single memory space.
+    	assert_eq!(cpu.mem_read(0x5000), 0x86);
+    } 
 
     // mem_write
 

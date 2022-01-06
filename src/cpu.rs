@@ -310,7 +310,6 @@ mod test {
     	assert_eq!(cpu.mem_read_u16(0xFFFC), 0x8000 as u16);
     }
 
-    // mem_read
     #[test]
     fn test_mem_read_happy_path() {
     	// Create a CPU.
@@ -319,15 +318,31 @@ mod test {
     	// Put a fake program on a single space in memory.
     	cpu.mem[0x5000] = 0x86;
 
-    	// Use mem_read on the single memory space.
+    	// Use mem_read to check the value in the single memory space.
     	assert_eq!(cpu.mem_read(0x5000), 0x86);
     } 
 
     // mem_write
+    	// Create a CPU.
+
+    	// Use mem_write to write to a location in the memory space.
+
+    	// Check the memory in the single memory space.
+
 
     // mem_read_u16
+    	// Create a CPU
+
+    	// Put something in a memory space.
+
+    	// Use mem_read_u16 to check the value in the single memory space.
 
     // mem_write_u16
+    	// Create a CPU.
+
+    	// Use mem_write_u16 to write to a location in the memory space.
+
+    	// Check the memory in the single memory space.
 
     // -------- LDA --------
 

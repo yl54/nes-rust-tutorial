@@ -1,4 +1,4 @@
-// TODO: Implement this in another MR.
+ // TODO: Implement this in another MR.
 // Addressing Modes
 	// List of Addressing Modes in Enum listing
 
@@ -119,7 +119,7 @@ impl CPU {
 		self.mem[addr as usize] = data;
 	}
 
-	// mem_read_u16 will read 4 bytes of whats at a memory position.
+	// mem_read_u16 will read 4 bytes of whats at 2 memory positions.
 	// This function assumes data is stored in little endian.
 	fn mem_read_u16(&mut self, addr: u16) -> u16 {
 		let low = self.mem_read(addr) as u16;
@@ -129,7 +129,7 @@ impl CPU {
 		(high << 8) | (low as u16)
 	}
 
-	// mem_write_u16 will write 4 bytes to a memory position.
+	// mem_write_u16 will write 4 bytes to 2 memory positions.
 	// This function assumes data is stored in little endian.
 	fn mem_write_u16(&mut self, addr: u16, value: u16) {
 		let high = (value >> 8) as u8;
@@ -322,32 +322,48 @@ mod test {
     	assert_eq!(cpu.mem_read(0x5000), 0x86);
     } 
 
-    // mem_write
+    #[test]
+    fn test_mem_write_happy_path() {
     	// Create a CPU.
+    	let mut cpu = CPU::new();
 
     	// Use mem_write to write to a location in the memory space.
+    	cpu.mem_write(0x3453, 0x42);
 
     	// Check the memory in the single memory space.
+    	assert_eq!(cpu.mem[0x3453], 0x42)
+    }
 
-
-    // mem_read_u16
+    #[test]
+    fn test_mem_read_u16_happy_path() {
     	// Create a CPU
+    	let mut cpu = CPU::new();
 
-    	// Put something in a memory space.
+    	// Put something in 2 memory spaces.
+    	cpu.mem[0x5000] = 0x12;
+    	cpu.mem[0x5001] = 0x34;
 
-    	// Use mem_read_u16 to check the value in the single memory space.
+    	// Use mem_read_u16 to check the value in the 2 memory spaces.
+    	assert_eq!(cpu.mem_read_u16(0x5000), 0x3412);
+    }
 
-    // mem_write_u16
+    #[test]
+    fn test_mem_write_u16_happy_path() {
     	// Create a CPU.
+    	let mut cpu = CPU::new();
 
-    	// Use mem_write_u16 to write to a location in the memory space.
+    	// Use mem_write_u16 to write to a location in the 2 memory spaces.
+    	cpu.mem_write_u16(0x5000, 0x1234);
 
-    	// Check the memory in the single memory space.
+    	// Check the memory in 2 memory spaces.
+    	assert_eq!(cpu.mem[0x5000], 0x34);
+    	assert_eq!(cpu.mem[0x5001], 0x12);
+	}
 
     // -------- LDA --------
 
     #[test]
-    fn test_LDA_happy_path() {
+    fn test_lda_happy_path() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -366,7 +382,7 @@ mod test {
     }
 
     #[test]
-    fn test_LDA_negative_input() {
+    fn test_lda_negative_input() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -385,7 +401,7 @@ mod test {
     }
 
     #[test]
-    fn test_LDA_zero() {
+    fn test_lda_zero() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -406,7 +422,7 @@ mod test {
     // -------- TAX --------
 
     #[test]
-    fn test_TAX_happy_path() {
+    fn test_tax_happy_path() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
 

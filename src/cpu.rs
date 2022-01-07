@@ -1,4 +1,4 @@
-// TODO: Implement this in another MR.
+ // TODO: Implement this in another MR.
 // Addressing Modes
 	// List of Addressing Modes in Enum listing
 
@@ -70,10 +70,11 @@ impl CPU {
 	}
 
 	// reset will restore all of the registers and memory to default states.
-	// When a new cartrigee is insertedd, the CPU recieves a special signal to:
+	// When a new cartrigee is inserted, the CPU recieves a special signal to:
 	// - Reset the state of all registers and flags.
 	// - Set the pc to the 16 bit address stored at 0xFFFC.
-	// TODO: Implement this in another MR.
+	// 
+	// reset does not change what is stored in memory.
 	pub fn reset(&mut self) {
 		// Set A register to 0.
 		self.a = 0;
@@ -92,7 +93,6 @@ impl CPU {
 	}
 
 	// load will load the program's ROM into the designated memory space.
-	// TODO: Implement this in another MR.
 	pub fn load_and_run(&mut self, program: Vec<u8>) {
 		self.load(program);
 		self.reset();
@@ -110,20 +110,17 @@ impl CPU {
 	}
 
 	// mem_read will read 2 bytes of whats at a memory position.
-	// TODO: Implement this in another MR.
 	fn mem_read(&self, addr: u16) -> u8 {
 		self.mem[addr as usize]
 	}
 
 	// mem_write will write 2 bytes to a memory position.
-	// TODO: Implement this in another MR.
 	fn mem_write(&mut self, addr: u16, data: u8) {
 		self.mem[addr as usize] = data;
 	}
 
-	// mem_read_u16 will read 4 bytes of whats at a memory position.
+	// mem_read_u16 will read 4 bytes of whats at 2 memory positions.
 	// This function assumes data is stored in little endian.
-	// TODO: Implement this in another MR.
 	fn mem_read_u16(&mut self, addr: u16) -> u16 {
 		let low = self.mem_read(addr) as u16;
 		let high = self.mem_read(addr + 1) as u16;
@@ -132,9 +129,8 @@ impl CPU {
 		(high << 8) | (low as u16)
 	}
 
-	// mem_write_u16 will write 4 bytes to a memory position.
+	// mem_write_u16 will write 4 bytes to 2 memory positions.
 	// This function assumes data is stored in little endian.
-	// TODO: Implement this in another MR.
 	fn mem_write_u16(&mut self, addr: u16, value: u16) {
 		let high = (value >> 8) as u8;
 		let low = (value & 0xff) as u8;
@@ -252,10 +248,122 @@ impl CPU {
 mod test {
     use super::*;
 
+    // -------- Internal Functions --------
+
+    #[test]
+    fn test_reset() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Call reset on the CPU.
+    	cpu.reset();
+
+    	// Check that the PC is set to 0.
+    	// In a real execution, self.pc should be 0x8000, but this is an isolated unit test. 
+    	assert_eq!(cpu.pc, 0);
+
+    	// Check that the other registers are set to 0.
+    	assert_eq!(cpu.a, 0);
+    	assert_eq!(cpu.x, 0);
+    	assert_eq!(cpu.y, 0);
+    	assert_eq!(cpu.p, 0);
+    }
+
+    #[test]
+    fn test_load_and_run_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run an empty program.
+    	cpu.load_and_run(vec![0x00]);
+
+    	// Check that the PC is set to 0x8000.
+    	assert_eq!(cpu.pc, 0x8001);
+
+    	// Check that the other registers are expected.
+    	assert_eq!(cpu.a, 0);
+    	assert_eq!(cpu.x, 0);
+    	assert_eq!(cpu.y, 0);
+    	assert_eq!(cpu.p, 0);
+    }
+
+    #[test]
+    fn test_load_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Create a fake program.
+    	let program = vec![0x34, 0x54, 0x12, 0x96];
+
+    	// Need a clone because the ownership of program will be moved into the load function.
+    	let program_clone = program.clone();
+
+    	// Load a fake program.
+    	cpu.load(program);
+
+    	// Check the contents of whats on memory.
+    	for n in 0..3 {
+    		assert_eq!(cpu.mem_read(0x8000 + n), program_clone[n as usize]);
+    	}
+
+    	// Check the value on the address 0xFCCC.
+    	assert_eq!(cpu.mem_read_u16(0xFFFC), 0x8000 as u16);
+    }
+
+    #[test]
+    fn test_mem_read_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Put a fake program on a single space in memory.
+    	cpu.mem[0x5000] = 0x86;
+
+    	// Use mem_read to check the value in the single memory space.
+    	assert_eq!(cpu.mem_read(0x5000), 0x86);
+    } 
+
+    #[test]
+    fn test_mem_write_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Use mem_write to write to a location in the memory space.
+    	cpu.mem_write(0x3453, 0x42);
+
+    	// Check the memory in the single memory space.
+    	assert_eq!(cpu.mem[0x3453], 0x42)
+    }
+
+    #[test]
+    fn test_mem_read_u16_happy_path() {
+    	// Create a CPU
+    	let mut cpu = CPU::new();
+
+    	// Put something in 2 memory spaces.
+    	cpu.mem[0x5000] = 0x12;
+    	cpu.mem[0x5001] = 0x34;
+
+    	// Use mem_read_u16 to check the value in the 2 memory spaces.
+    	assert_eq!(cpu.mem_read_u16(0x5000), 0x3412);
+    }
+
+    #[test]
+    fn test_mem_write_u16_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Use mem_write_u16 to write to a location in the 2 memory spaces.
+    	cpu.mem_write_u16(0x5000, 0x1234);
+
+    	// Check the memory in 2 memory spaces.
+    	assert_eq!(cpu.mem[0x5000], 0x34);
+    	assert_eq!(cpu.mem[0x5001], 0x12);
+	}
+
     // -------- LDA --------
 
     #[test]
-    fn test_LDA_happy_path() {
+    fn test_lda_happy_path() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -274,7 +382,7 @@ mod test {
     }
 
     #[test]
-    fn test_LDA_negative_input() {
+    fn test_lda_negative_input() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -293,7 +401,7 @@ mod test {
     }
 
     #[test]
-    fn test_LDA_zero() {
+    fn test_lda_zero() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -314,7 +422,7 @@ mod test {
     // -------- TAX --------
 
     #[test]
-    fn test_TAX_happy_path() {
+    fn test_tax_happy_path() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
 

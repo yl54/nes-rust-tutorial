@@ -1,6 +1,38 @@
  // TODO: Implement this in another MR.
 // Addressing Modes
+pub enum AddressingMode {
 	// List of Addressing Modes in Enum listing
+
+	// Immediate
+	Immediate,
+
+	// Zero Page
+	ZeroPage,
+
+	// Zero Page X
+	ZeroPageX,
+
+	// Zero Page Y
+	ZeroPageY,
+
+	// Absolute
+	Absolute,
+
+	// Absolute X
+	AbsoluteX,
+
+	// Absolute Y
+	AbsoluteY,
+
+	// Indirect X
+	IndirectX,
+
+	// Indirect Y
+	IndirectY,
+
+	// None Addressing
+	NoneAddressing,
+}
 
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
@@ -141,6 +173,70 @@ impl CPU {
 	// get_operand_address determines how an address should be read.
 	// It is determined based off of the Addressing mode.
 	// TODO: Implement this in another MR.
+		// Check what mode is passed in.
+
+			// Immediate
+				// Return the current value of the pc.
+
+			// Zero Page
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+
+			// Absolute
+				// Read the value stored on 2 adjacent addresses.
+				// The value of the first address is the value of the pc. 
+
+			// Zero Page X
+				// Read 1 value stored on 1 address and add value of x to it.
+				// The value of the address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				
+			// Zero Page Y
+				// Read 1 value stored on 1 address and add value of y to it.
+				// The value of the address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+
+			// Absolute X
+				// Read the value stored on 2 adjacent address and add value of x to it.
+				// The value of the first address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+
+			// Absolute Y
+				// Read the value stored on 2 adjacent address and add value of y to it.
+				// The value of the first address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+
+			// Indirect X
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+				
+				// Add x to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+
+				// Read the low value stored on the pointer.
+
+				// Read the high value stored on the pointer.
+
+				// Put the high value on the lower end, and low value on the higher end.
+				// This is a little endian.
+				// Return this computation.
+
+
+			// Indirect Y
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+				
+				// Add y to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+
+				// Read the low value stored on the pointer.
+
+				// Read the high value stored on the pointer.
+
+				// Put the high value on the lower end, and low value on the higher end.
+				// This is a little endian.
+				// Return this computation.
+
+			// None Addressing
+				// Not supported.
 
 	/*
 	 * interpret interprets the incoming instructions.
@@ -359,6 +455,28 @@ mod test {
     	assert_eq!(cpu.mem[0x5000], 0x34);
     	assert_eq!(cpu.mem[0x5001], 0x12);
 	}
+
+    // -------- Operand Addressing --------
+
+   	// Immediate
+
+	// Zero Page
+			
+	// Absolute
+			
+	// Zero Page X
+			
+	// Zero Page Y
+			
+	// Absolute X
+				
+	// Absolute Y
+				
+	// Indirect X
+
+	// Indirect Y
+			
+	// None Addressing
 
     // -------- LDA --------
 

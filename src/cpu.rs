@@ -7,28 +7,28 @@ pub enum AddressingMode {
 	Immediate,
 
 	// Zero Page
-	ZeroPage,
+	// ZeroPage,
 
 	// Zero Page X
-	ZeroPageX,
+	// ZeroPageX,
 
 	// Zero Page Y
-	ZeroPageY,
+	// ZeroPageY,
 
 	// Absolute
-	Absolute,
+	// Absolute,
 
 	// Absolute X
-	AbsoluteX,
+	// AbsoluteX,
 
 	// Absolute Y
-	AbsoluteY,
+	// AbsoluteY,
 
 	// Indirect X
-	IndirectX,
+	// IndirectX,
 
 	// Indirect Y
-	IndirectY,
+	// IndirectY,
 
 	// None Addressing
 	NoneAddressing,
@@ -173,10 +173,14 @@ impl CPU {
 	// get_operand_address determines how an address should be read.
 	// It is determined based off of the Addressing mode.
 	// TODO: Implement this in another MR.
-		// Check what mode is passed in.
-
+	fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+ 		// Check what mode is passed in.
+ 		match mode {
 			// Immediate
+			AddressingMode::Immediate => {
 				// Return the current value of the pc.
+				self.pc
+			}
 
 			// Zero Page
 				// Read the value stored on 1 address.
@@ -236,7 +240,12 @@ impl CPU {
 				// Return this computation.
 
 			// None Addressing
+			AddressingMode::NoneAddressing => {
 				// Not supported.
+				panic!("not supported");
+			}
+		}
+	}
 
 	/*
 	 * interpret interprets the incoming instructions.
@@ -459,6 +468,18 @@ mod test {
     // -------- Operand Addressing --------
 
    	// Immediate
+   	#[test]
+   	fn test_get_operand_address_immediate() {
+   		// Create a CPU.
+   		let mut cpu = CPU::new();
+
+   		// Set the pc to some value.
+   		cpu.pc = 0x4343;
+
+   		// Call get_operand with Immediate mode.
+   		// Check that the expected value is returned.
+   		assert_eq!(cpu.get_operand_address(&AddressingMode::Immediate), 0x4343)
+   	}
 
 	// Zero Page
 			

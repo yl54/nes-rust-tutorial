@@ -7,7 +7,7 @@ pub enum AddressingMode {
 	Immediate,
 
 	// Zero Page
-	// ZeroPage,
+	ZeroPage,
 
 	// Zero Page X
 	// ZeroPageX,
@@ -183,8 +183,11 @@ impl CPU {
 			}
 
 			// Zero Page
+			AddressingMode::ZeroPage => {
 				// Read the value stored on 1 address.
 				// The value of the address is the value of the pc.
+				self.mem_read(self.pc) as u16
+			}
 
 			// Absolute
 				// Read the value stored on 2 adjacent addresses.
@@ -467,21 +470,32 @@ mod test {
 
     // -------- Operand Addressing --------
 
-   	// Immediate
    	#[test]
-   	fn test_get_operand_address_immediate() {
+   	fn test_get_operand_address_immediate_happypath() {
    		// Create a CPU.
    		let mut cpu = CPU::new();
 
    		// Set the pc to some value.
    		cpu.pc = 0x4343;
 
-   		// Call get_operand with Immediate mode.
-   		// Check that the expected value is returned.
+   		// Check that the expected value is returned from get_operand_address.
    		assert_eq!(cpu.get_operand_address(&AddressingMode::Immediate), 0x4343)
    	}
 
-	// Zero Page
+	#[test]
+	fn test_get_operand_address_zeropage_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x9043;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x34;
+
+   		// Check that the expected value is returned from get_operand_address.
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPage), 0x34);
+	}
 			
 	// Absolute
 			

@@ -13,7 +13,7 @@ pub enum AddressingMode {
 	ZeroPageX,
 
 	// Zero Page Y
-	// ZeroPageY,
+	ZeroPageY,
 
 	// Absolute
 	Absolute,
@@ -208,9 +208,14 @@ impl CPU {
 			}
 				
 			// Zero Page Y
+			AddressingMode::ZeroPageY => {
 				// Read 1 value stored on 1 address and add value of y to it.
 				// The value of the address is the value of the pc.
 				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let pos = self.mem_read(self.pc);
+				let addr = pos.wrapping_add(self.y) as u16;
+				addr
+			}
 
 			// Absolute X
 				// Read the value stored on 2 adjacent address and add value of x to it.
@@ -535,7 +540,8 @@ mod test {
 		// Set the memory address of the pc to a value.
 		cpu.mem[cpu.pc as usize] = 0x01;
 
-		// Set the x value to some value.
+		// Set the x value to some value, no overflow.
+		// Can use a simple "+" as it won't overflow. 
 		cpu.x = 0x42;
 
 		// Check that the expected value is returned from get_operand_address.
@@ -563,8 +569,27 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
 	}
 			
-	// Zero Page Y
-			
+	#[test]
+	fn test_get_operand_address_zeropagey_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4351;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0x01;
+
+		// Set the y value to some value, no overflow.
+		cpu.y = 0x34;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		// 0x01 + 0x34 = 53 = 0x35
+		let expected = 0x35;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
+	}
+
 	// Absolute X
 				
 	// Absolute Y

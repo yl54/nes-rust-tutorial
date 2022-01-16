@@ -19,7 +19,7 @@ pub enum AddressingMode {
 	Absolute,
 
 	// Absolute X
-	// AbsoluteX,
+	AbsoluteX,
 
 	// Absolute Y
 	// AbsoluteY,
@@ -218,9 +218,14 @@ impl CPU {
 			}
 
 			// Absolute X
+			AddressingMode::AbsoluteX => {
 				// Read the value stored on 2 adjacent address and add value of x to it.
 				// The value of the first address is the value of the pc.
 				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let base = self.mem_read_u16(self.pc);
+				let addr = base.wrapping_add(self.x as u16);
+				addr
+			}
 
 			// Absolute Y
 				// Read the value stored on 2 adjacent address and add value of y to it.
@@ -483,6 +488,7 @@ mod test {
 	}
 
     // -------- Operand Addressing --------
+    // TODO: For all the expected, use the exact value as the value of expected, rather than the formula.
 
    	#[test]
    	fn test_get_operand_address_immediate_happypath() {
@@ -590,7 +596,71 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
 	}
 
-	// Absolute X
+	#[test]
+	fn test_get_operand_address_zeropagey_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4351;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0xef;
+
+		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xf4;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" because it will overflow the space.
+		let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y) as u16;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_absolutex_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4512;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x23;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x76;
+
+		// Set the x value to some value, no overflow.
+		cpu.x = 0x32;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+"" as it won't overflow.
+		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.x as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_absolutex_overflow(){
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x65;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xff;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0xff;
+
+		// Set the x value to some value that will overflow the u16 bit space.
+		cpu.x = 0x8f;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" because it will overflow the space.
+		let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.x as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
+	}
 				
 	// Absolute Y
 				

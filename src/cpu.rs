@@ -22,7 +22,7 @@ pub enum AddressingMode {
 	AbsoluteX,
 
 	// Absolute Y
-	// AbsoluteY,
+	AbsoluteY,
 
 	// Indirect X
 	// IndirectX,
@@ -228,9 +228,14 @@ impl CPU {
 			}
 
 			// Absolute Y
+			AddressingMode::AbsoluteY => {
 				// Read the value stored on 2 adjacent address and add value of y to it.
 				// The value of the first address is the value of the pc.
 				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let base = self.mem_read_u16(self.pc);
+				let addr = base.wrapping_add(self.y as u16);
+				addr
+			}
 
 			// Indirect X
 				// Read the value stored on 1 address.
@@ -662,7 +667,50 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
 	}
 				
-	// Absolute Y
+	#[test]
+	fn test_get_operand_address_absolutey_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x34;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x34;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x56;
+
+		// Set the y valuee to some value that will not overflow the u16 bit space.
+		cpu.y = 0x32;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.y as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
+	}
+
+	fn test_get_operand_address_absolutey_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x34;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x97;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x67;
+
+		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xff;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+		let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.y as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
+	}
 				
 	// Indirect X
 

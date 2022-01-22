@@ -25,7 +25,7 @@ pub enum AddressingMode {
 	AbsoluteY,
 
 	// Indirect X
-	// IndirectX,
+	IndirectX,
 
 	// Indirect Y
 	// IndirectY,
@@ -238,19 +238,25 @@ impl CPU {
 			}
 
 			// Indirect X
+			AddressingMode::IndirectX => {
 				// Read the value stored on 1 address.
 				// The value of the address is the value of the pc.
+				let base = self.mem_read(self.pc);
 				
 				// Add x to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+				let ptr: u8 = (base as u8).wrapping_add(self.x);
 
 				// Read the low value stored on the pointer.
+				let low = self.mem_read(ptr as u16);
 
 				// Read the high value stored on the pointer.
+				let high = self.mem_read(ptr.wrapping_add(1) as u16);
 
 				// Put the high value on the lower end, and low value on the higher end.
 				// This is a little endian.
 				// Return this computation.
-
+				((high as u16) << 8) | (low as u16)
+			}
 
 			// Indirect Y
 				// Read the value stored on 1 address.
@@ -494,6 +500,7 @@ mod test {
 
     // -------- Operand Addressing --------
     // TODO: For all the expected, use the exact value as the value of expected, rather than the formula.
+    // Leave the equation used to get the number as a comment.
 
    	#[test]
    	fn test_get_operand_address_immediate_happypath() {
@@ -690,6 +697,7 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
 	}
 
+	#[test]
 	fn test_get_operand_address_absolutey_overflow() {
 		// Create a CPU.
 		let mut cpu = CPU::new();
@@ -712,7 +720,58 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
 	}
 				
-	// Indirect X
+	#[test]
+	fn test_get_operand_address_indirectx_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x54;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x43;
+
+		// Set the x value to some value that will not overflow the u16 bit space.
+		cpu.x = 0x01;
+
+		// Set the address of the pc's address value to some value.
+		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x)) as usize] = 0x23;
+
+		// Set the address of the pc + 1 address value to some value.
+		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x + 1)) as usize] = 0x76;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow
+		let expected = 0x7623;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectX), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_indirectx_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x45;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xff;
+
+		// Set the x value to some value that will overflow the u16 bit space.
+		cpu.x = 0x43;
+
+		// Set the address of the pc's address value to some value.
+		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x)) as usize] = 0x23; 
+
+		// Set the address of the pc + 1 address value to some value.
+		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x + 1)) as usize] = 0x98; 
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+		let expected = 0x9823;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectX), expected);
+	}
+
 
 	// Indirect Y
 			

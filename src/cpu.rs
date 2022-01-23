@@ -28,7 +28,7 @@ pub enum AddressingMode {
 	IndirectX,
 
 	// Indirect Y
-	// IndirectY,
+	IndirectY,
 
 	// None Addressing
 	NoneAddressing,
@@ -259,18 +259,25 @@ impl CPU {
 			}
 
 			// Indirect Y
+			AddressingMode::IndirectY => {
 				// Read the value stored on 1 address.
 				// The value of the address is the value of the pc.
+				let base = self.mem_read(self.pc);
 				
 				// Add y to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+				let ptr = (base as u8).wrapping_add(self.y);
 
 				// Read the low value stored on the pointer.
+				let low = self.mem_read(ptr as u16);
 
 				// Read the high value stored on the pointer.
+				let high = self.mem_read(ptr.wrapping_add(1) as u16);
 
 				// Put the high value on the lower end, and low value on the higher end.
 				// This is a little endian.
 				// Return this computation.
+				((high as u16) << 8) | (low as u16)
+			}
 
 			// None Addressing
 			AddressingMode::NoneAddressing => {
@@ -734,11 +741,15 @@ mod test {
 		// Set the x value to some value that will not overflow the u16 bit space.
 		cpu.x = 0x01;
 
+		// Get the pointer.
+		// Add x to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+
 		// Set the address of the pc's address value to some value.
-		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x)) as usize] = 0x23;
+		cpu.mem[ptr as usize] = 0x23;
 
 		// Set the address of the pc + 1 address value to some value.
-		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x + 1)) as usize] = 0x76;
+		cpu.mem[(ptr.wrapping_add(1)) as usize] = 0x76;
 
 		// Check that the expected value is returned from get_operand_address.
 		// Can use a simple "+" as it won't overflow
@@ -760,11 +771,15 @@ mod test {
 		// Set the x value to some value that will overflow the u16 bit space.
 		cpu.x = 0x43;
 
+		// Get the pointer.
+		// Add x to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+
 		// Set the address of the pc's address value to some value.
-		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x)) as usize] = 0x23; 
+		cpu.mem[ptr as usize] = 0x23; 
 
 		// Set the address of the pc + 1 address value to some value.
-		cpu.mem[(cpu.mem[cpu.pc as usize].wrapping_add(cpu.x + 1)) as usize] = 0x98; 
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x98; 
 
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" as it will overflow the space.
@@ -774,7 +789,56 @@ mod test {
 
 
 	// Indirect Y
-			
+	
+	#[test]
+	fn test_get_operand_address_indirecty_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set pc to some value.
+		cpu.pc = 0x43;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x22;
+
+		// Set the y value to some value that will not overflow the u16 bit space.
+		cpu.y = 0x01;
+
+		// Get the pointer.
+		// Add y to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+
+		// Set the address of the pc + y address value to some value.
+		cpu.mem[ptr as usize] = 0x42;
+
+		// Set the address of the pc + y + 1 address value to some value.
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x67;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		let expected = 0x6742;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectY), expected);
+	}
+
+	// overflow
+		// Create a CPU.
+
+		// Set pc to some value.
+
+		// Set the address of the pc to some value.
+
+		// Set the y value to some value that will overflow the u16 bit space.
+
+		// Set the address of the pc + y address value to some value.
+
+		// Set the address of the pc + y + 1 address value to some value.
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+
+	// overflow ptr + y + 1
+
+
 	// None Addressing
 
     // -------- LDA --------

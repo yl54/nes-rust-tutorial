@@ -863,7 +863,6 @@ mod test {
 		cpu.get_operand_address(&AddressingMode::NoneAddressing);
 	}
 
-
     // -------- LDA --------
 
     #[test]

@@ -856,6 +856,13 @@ mod test {
 	// TODO: overflow ptr + y + 1
 
 	// None Addressing
+	#[test]
+	#[should_panic]
+	fn test_get_operand_address_none_happypath() {
+		let mut cpu = CPU::new();
+		cpu.get_operand_address(&AddressingMode::NoneAddressing);
+	}
+
 
     // -------- LDA --------
 

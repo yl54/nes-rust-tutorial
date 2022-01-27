@@ -1,6 +1,38 @@
  // TODO: Implement this in another MR.
 // Addressing Modes
+pub enum AddressingMode {
 	// List of Addressing Modes in Enum listing
+
+	// Immediate
+	Immediate,
+
+	// Zero Page
+	ZeroPage,
+
+	// Zero Page X
+	ZeroPageX,
+
+	// Zero Page Y
+	ZeroPageY,
+
+	// Absolute
+	Absolute,
+
+	// Absolute X
+	AbsoluteX,
+
+	// Absolute Y
+	AbsoluteY,
+
+	// Indirect X
+	IndirectX,
+
+	// Indirect Y
+	IndirectY,
+
+	// None Addressing
+	NoneAddressing,
+}
 
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
@@ -121,7 +153,7 @@ impl CPU {
 
 	// mem_read_u16 will read 4 bytes of whats at 2 memory positions.
 	// This function assumes data is stored in little endian.
-	fn mem_read_u16(&mut self, addr: u16) -> u16 {
+	fn mem_read_u16(&self, addr: u16) -> u16 {
 		let low = self.mem_read(addr) as u16;
 		let high = self.mem_read(addr + 1) as u16;
 
@@ -139,8 +171,121 @@ impl CPU {
 	}
 
 	// get_operand_address determines how an address should be read.
+	// It returns an address for the next step to read off of.
 	// It is determined based off of the Addressing mode.
 	// TODO: Implement this in another MR.
+	fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+ 		// Check what mode is passed in.
+ 		match mode {
+			// Immediate
+			AddressingMode::Immediate => {
+				// Return the current value of the pc.
+				self.pc
+			}
+
+			// Zero Page
+			AddressingMode::ZeroPage => {
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+				self.mem_read(self.pc) as u16
+			}
+
+			// Absolute
+			AddressingMode::Absolute => {
+				// Read the value stored on 2 adjacent addresses.
+				// The value of the first address is the value of the pc.
+				self.mem_read_u16(self.pc) 
+			}
+
+			// Zero Page X
+			AddressingMode::ZeroPageX => {
+				// Read 1 value stored on 1 address and add value of x to it.
+				// The value of the address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let pos = self.mem_read(self.pc);
+				let addr = pos.wrapping_add(self.x) as u16;
+				addr
+			}
+				
+			// Zero Page Y
+			AddressingMode::ZeroPageY => {
+				// Read 1 value stored on 1 address and add value of y to it.
+				// The value of the address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let pos = self.mem_read(self.pc);
+				let addr = pos.wrapping_add(self.y) as u16;
+				addr
+			}
+
+			// Absolute X
+			AddressingMode::AbsoluteX => {
+				// Read the value stored on 2 adjacent address and add value of x to it.
+				// The value of the first address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let base = self.mem_read_u16(self.pc);
+				let addr = base.wrapping_add(self.x as u16);
+				addr
+			}
+
+			// Absolute Y
+			AddressingMode::AbsoluteY => {
+				// Read the value stored on 2 adjacent address and add value of y to it.
+				// The value of the first address is the value of the pc.
+				// These are added together. If the value overflows the available byte space, it will restart from 0.
+				let base = self.mem_read_u16(self.pc);
+				let addr = base.wrapping_add(self.y as u16);
+				addr
+			}
+
+			// Indirect X
+			AddressingMode::IndirectX => {
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+				let base = self.mem_read(self.pc);
+				
+				// Add x to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+				let ptr: u8 = (base as u8).wrapping_add(self.x);
+
+				// Read the low value stored on the pointer.
+				let low = self.mem_read(ptr as u16);
+
+				// Read the high value stored on the pointer.
+				let high = self.mem_read(ptr.wrapping_add(1) as u16);
+
+				// Put the high value on the lower end, and low value on the higher end.
+				// This is a little endian.
+				// Return this computation.
+				((high as u16) << 8) | (low as u16)
+			}
+
+			// Indirect Y
+			AddressingMode::IndirectY => {
+				// Read the value stored on 1 address.
+				// The value of the address is the value of the pc.
+				let base = self.mem_read(self.pc);
+				
+				// Add y to the value. If the value overflows the available byte space, it will restart from 0. This will be the pointer.
+				let ptr = (base as u8).wrapping_add(self.y);
+
+				// Read the low value stored on the pointer.
+				let low = self.mem_read(ptr as u16);
+
+				// Read the high value stored on the pointer.
+				let high = self.mem_read(ptr.wrapping_add(1) as u16);
+
+				// Put the high value on the lower end, and low value on the higher end.
+				// This is a little endian.
+				// Return this computation.
+				((high as u16) << 8) | (low as u16)
+			}
+
+			// None Addressing
+			AddressingMode::NoneAddressing => {
+				// Not supported.
+				panic!("not supported");
+			}
+		}
+	}
 
 	/*
 	 * interpret interprets the incoming instructions.
@@ -358,6 +503,364 @@ mod test {
     	// Check the memory in 2 memory spaces.
     	assert_eq!(cpu.mem[0x5000], 0x34);
     	assert_eq!(cpu.mem[0x5001], 0x12);
+	}
+
+    // -------- Operand Addressing --------
+    // TODO: For all the expected, use the exact value as the value of expected, rather than the formula.
+    // Leave the equation used to get the number as a comment.
+    // TODO: Put the actual number on top of each address.
+
+   	#[test]
+   	fn test_get_operand_address_immediate_happypath() {
+   		// Create a CPU.
+   		let mut cpu = CPU::new();
+
+   		// Set the pc to some value.
+   		cpu.pc = 0x4343;
+
+   		// Check that the expected value is returned from get_operand_address.
+   		assert_eq!(cpu.get_operand_address(&AddressingMode::Immediate), 0x4343)
+   	}
+
+	#[test]
+	fn test_get_operand_address_zeropage_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x9043;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x34;
+
+   		// Check that the expected value is returned from get_operand_address.
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPage), 0x34 as u16);
+	}
+			
+	#[test]
+	fn test_get_operand_address_absolute_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x5050;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0x65;
+
+		// Set the adjacent +1 memory address of the pc to a value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x12;
+
+		// Check that the expected value is returned from get_operand_address.
+		assert_eq!(cpu.get_operand_address(&AddressingMode::Absolute), 0x1265);
+	}
+
+	#[test]
+	fn test_get_operand_address_zeropagex_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x3445;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0x01;
+
+		// Set the x value to some value, no overflow.
+		// Can use a simple "+" as it won't overflow. 
+		cpu.x = 0x42;
+
+		// Check that the expected value is returned from get_operand_address.
+		let expected = (cpu.mem[cpu.pc as usize] + cpu.x) as u16;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_zeropagex_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4353;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0xfd;
+
+		// Set the x value to some value that will overflow the u16 bit space.
+		cpu.x = 0xfe;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" because it will overflow the space.
+		let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x) as u16;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
+	}
+			
+	#[test]
+	fn test_get_operand_address_zeropagey_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4351;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0x01;
+
+		// Set the y value to some value, no overflow.
+		cpu.y = 0x34;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		// 0x01 + 0x34 = 53 = 0x35
+		let expected = 0x35;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_zeropagey_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4351;
+
+		// Set the memory address of the pc to a value.
+		cpu.mem[cpu.pc as usize] = 0xef;
+
+		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xf4;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" because it will overflow the space.
+		let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y) as u16;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_absolutex_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x4512;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x23;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x76;
+
+		// Set the x value to some value, no overflow.
+		cpu.x = 0x32;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+"" as it won't overflow.
+		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.x as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_absolutex_overflow(){
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x65;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xff;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0xff;
+
+		// Set the x value to some value that will overflow the u16 bit space.
+		cpu.x = 0x8f;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" because it will overflow the space.
+		let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.x as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
+	}
+				
+	#[test]
+	fn test_get_operand_address_absolutey_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x34;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x34;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x56;
+
+		// Set the y valuee to some value that will not overflow the u16 bit space.
+		cpu.y = 0x32;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.y as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_absolutey_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x34;
+
+		// Set the memory address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x97;
+
+		// Set the memory address of the pc + 1 to some value.
+		cpu.mem[(cpu.pc + 1) as usize] = 0x67;
+
+		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xff;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+		let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.y as u16);
+		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
+	}
+				
+	#[test]
+	fn test_get_operand_address_indirectx_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x54;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x43;
+
+		// Set the x value to some value that will not overflow the u16 bit space.
+		cpu.x = 0x01;
+
+		// Get the pointer.
+		// Add x to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+
+		// Set the address of the pc's address value to some value.
+		cpu.mem[ptr as usize] = 0x23;
+
+		// Set the address of the pc + 1 address value to some value.
+		cpu.mem[(ptr.wrapping_add(1)) as usize] = 0x76;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow
+		let expected = 0x7623;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectX), expected);
+	}
+
+	#[test]
+	fn test_get_operand_address_indirectx_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set the pc to some value.
+		cpu.pc = 0x45;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xff;
+
+		// Set the x value to some value that will overflow the u16 bit space.
+		cpu.x = 0x43;
+
+		// Get the pointer.
+		// Add x to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+
+		// Set the address of the pc's address value to some value.
+		cpu.mem[ptr as usize] = 0x23; 
+
+		// Set the address of the pc + 1 address value to some value.
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x98; 
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+		let expected = 0x9823;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectX), expected);
+	}
+
+	// TODO: overflow ptr + y + 1
+
+	// Indirect Y
+	
+	#[test]
+	fn test_get_operand_address_indirecty_happypath() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set pc to some value.
+		cpu.pc = 0x43;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0x22;
+
+		// Set the y value to some value that will not overflow the u16 bit space.
+		cpu.y = 0x01;
+
+		// Get the pointer.
+		// Add y to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+
+		// Set the address of the pc + y address value to some value.
+		cpu.mem[ptr as usize] = 0x42;
+
+		// Set the address of the pc + y + 1 address value to some value.
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x67;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Can use a simple "+" as it won't overflow.
+		let expected = 0x6742;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectY), expected);
+	}
+
+	// overflow
+	#[test]
+	fn test_get_operand_address_indirecty_overflow() {
+		// Create a CPU.
+		let mut cpu = CPU::new();
+
+		// Set pc to some value.
+		cpu.pc = 0x12;
+
+		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xdd;
+
+		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xff;
+
+		// Get the pointer.
+		// Add y to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		
+		// Set the address of the pc + y address value to some value.
+		cpu.mem[ptr as usize] = 0x47;
+
+		// Set the address of the pc + y + 1 address value to some value.
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x12;
+
+		// Check that the expected value is returned from get_operand_address.
+		// Cannot use a simple "+" as it will overflow the space.
+		let expected = 0x1247;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectY), expected);
+	}
+
+	// TODO: overflow ptr + y + 1
+
+	// None Addressing
+	#[test]
+	#[should_panic]
+	fn test_get_operand_address_none_happypath() {
+		let mut cpu = CPU::new();
+		cpu.get_operand_address(&AddressingMode::NoneAddressing);
 	}
 
     // -------- LDA --------

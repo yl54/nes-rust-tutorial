@@ -508,6 +508,7 @@ mod test {
     // -------- Operand Addressing --------
     // TODO: For all the expected, use the exact value as the value of expected, rather than the formula.
     // Leave the equation used to get the number as a comment.
+    // TODO: Put the actual number on top of each address.
 
    	#[test]
    	fn test_get_operand_address_immediate_happypath() {
@@ -787,6 +788,7 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectX), expected);
 	}
 
+	// TODO: overflow ptr + y + 1
 
 	// Indirect Y
 	
@@ -821,23 +823,37 @@ mod test {
 	}
 
 	// overflow
+	#[test]
+	fn test_get_operand_address_indirecty_overflow() {
 		// Create a CPU.
+		let mut cpu = CPU::new();
 
 		// Set pc to some value.
+		cpu.pc = 0x12;
 
 		// Set the address of the pc to some value.
+		cpu.mem[cpu.pc as usize] = 0xdd;
 
 		// Set the y value to some value that will overflow the u16 bit space.
+		cpu.y = 0xff;
 
+		// Get the pointer.
+		// Add y to the value stored on the pc's address.
+		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		
 		// Set the address of the pc + y address value to some value.
+		cpu.mem[ptr as usize] = 0x47;
 
 		// Set the address of the pc + y + 1 address value to some value.
+		cpu.mem[ptr.wrapping_add(1) as usize] = 0x12;
 
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" as it will overflow the space.
+		let expected = 0x1247;
+		assert_eq!(cpu.get_operand_address(&AddressingMode::IndirectY), expected);
+	}
 
-	// overflow ptr + y + 1
-
+	// TODO: overflow ptr + y + 1
 
 	// None Addressing
 

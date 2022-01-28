@@ -151,6 +151,7 @@ impl CPU {
 		self.mem[addr as usize] = data;
 	}
 
+	// TODO: Figure out what happens if mem_read_u16 is reading from the last address as the first position.
 	// mem_read_u16 will read 4 bytes of whats at 2 memory positions.
 	// This function assumes data is stored in little endian.
 	fn mem_read_u16(&self, addr: u16) -> u16 {
@@ -519,7 +520,7 @@ mod test {
    		cpu.pc = 0x4343;
 
    		// Check that the expected value is returned from get_operand_address.
-   		assert_eq!(cpu.get_operand_address(&AddressingMode::Immediate), 0x4343)
+   		assert_eq!(cpu.get_operand_address(&AddressingMode::Immediate), 0x4343);
    	}
 
 	#[test]
@@ -555,6 +556,8 @@ mod test {
 		assert_eq!(cpu.get_operand_address(&AddressingMode::Absolute), 0x1265);
 	}
 
+	// TODO: Check if a test needs to be added for absolute addressing if its reading from the last address.
+
 	#[test]
 	fn test_get_operand_address_zeropagex_happypath() {
 		// Create a CPU.
@@ -571,7 +574,10 @@ mod test {
 		cpu.x = 0x42;
 
 		// Check that the expected value is returned from get_operand_address.
-		let expected = (cpu.mem[cpu.pc as usize] + cpu.x) as u16;
+		// let expected = (cpu.mem[cpu.pc as usize] + cpu.x) as u16;
+		// 0x01 + 0x42 = 0x43
+		// let expected = 0x43 as u16;
+		let expected = 67 as u16;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
 	}
 
@@ -591,7 +597,11 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" because it will overflow the space.
-		let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x) as u16;
+		// let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x) as u16;
+		// 0xfd + 0xfe = 0xfb
+		// let expected = 0xfb as u16;
+		let expected = 251 as u16;
+
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
 	}
 			

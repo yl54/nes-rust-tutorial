@@ -575,7 +575,7 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// let expected = (cpu.mem[cpu.pc as usize] + cpu.x) as u16;
-		// 0x01 + 0x42 = 0x43
+		// 0x01 + 0x42 = 0x43 = 67
 		// let expected = 0x43 as u16;
 		let expected = 67 as u16;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageX), expected);
@@ -598,7 +598,9 @@ mod test {
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" because it will overflow the space.
 		// let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x) as u16;
-		// 0xfd + 0xfe = 0xfb
+		// 0xfd + 0xfe = 0xfb = 251
+		// 253 + 254 = 507
+		// 507 - 256 = 251
 		// let expected = 0xfb as u16;
 		let expected = 251 as u16;
 
@@ -621,8 +623,9 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// Can use a simple "+" as it won't overflow.
-		// 0x01 + 0x34 = 53 = 0x35
-		let expected = 0x35;
+		// 0x01 + 0x34 = 0x35 = 53
+		// let expected = 0x35;
+		let expected = 53 as u16;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
 	}
 
@@ -642,7 +645,11 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" because it will overflow the space.
-		let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y) as u16;
+		// let expected = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y) as u16;
+		// 0xef + 0xf4 = 239 + 244 = 483
+		// 483 - 256 = 227 = 0xe3
+		// let expected = 0xe3 as u16;
+		let expected = 227 as u16;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::ZeroPageY), expected);
 	}
 

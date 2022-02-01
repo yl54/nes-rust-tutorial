@@ -671,8 +671,15 @@ mod test {
 		cpu.x = 0x32;
 
 		// Check that the expected value is returned from get_operand_address.
-		// Can use a simple "+"" as it won't overflow.
-		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.x as u16);
+		// Can use a simple "+" as it won't overflow.
+		// let expected = cpu.mem_read_u16(cpu.pc) + (cpu.x as u16);
+		// 0x7623 + 0x0032
+		// 0111 0110 0010 0011 + 0000 0000 0011 0010
+		// 0x7623 = (2 ^ 14 + 2 ^ 13 + 2 ^ 12) + (2 ^ 10 + 2 ^ 9) + (2 ^ 5) + (2 ^ 1 + 2 ^ 0) = 30243
+		// 0x0032 = (0) + (0) + (2 ^ 5 + 2 ^ 4) + (2 ^ 1) = 50
+		// 30243 + 50 = 30293 = 0x7655
+		// let expected = 0x7655;
+		let expected = 30293;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
 	}
 

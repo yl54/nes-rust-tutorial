@@ -702,7 +702,13 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// Cannot use a simple "+" because it will overflow the space.
-		let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.x as u16);
+		// let expected = cpu.mem_read_u16(cpu.pc).wrapping_add(cpu.x as u16);
+		// 0xffff = 1111 1111 1111 1111 = 2 ^ 16 - 1
+		// 0x8f = 1000 1111 = (2 ^ 7) + (2 ^ 3 + 2 ^ 2 + 2 ^ 1 + 2 ^ 0) = (128 + 15) = 143
+		// 143 + (2 ^ 16 - 1) - (2 ^ 16) = 142 = 0x8e
+		// 143 + (2 ^ 16 - 1) - (2 ^ 16) = 142
+		// let expected = 0x8e;
+		let expected = 142;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteX), expected);
 	}
 				

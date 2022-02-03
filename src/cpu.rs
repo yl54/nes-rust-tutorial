@@ -721,7 +721,7 @@ mod test {
 		cpu.pc = 0x34;
 
 		// Set the memory address of the pc to some value.
-		cpu.mem[cpu.pc as usize] = 0x34;
+		cpu.mem[cpu.pc as usize] = 0x87;
 
 		// Set the memory address of the pc + 1 to some value.
 		cpu.mem[(cpu.pc + 1) as usize] = 0x56;
@@ -731,7 +731,12 @@ mod test {
 
 		// Check that the expected value is returned from get_operand_address.
 		// Can use a simple "+" as it won't overflow.
-		let expected = cpu.mem_read_u16(cpu.pc) + (cpu.y as u16);
+		// let expected = cpu.mem_read_u16(cpu.pc) + (cpu.y as u16);
+		// let expected = 0x56b9;
+		// 0x5687 = 0101 0110 1000 0111 = (2 ^ 14 + 2 ^ 12) + (2 ^ 10 + 2 ^ 9) + (2 ^ 7) + (2 ^ 2 + 2 ^ 1 + 2 ^ 0) = 22151
+		// 0x32 = 0011 0010 = (2 ^ 5 + 2 ^ 4) + (2 ^ 1) = 50
+		// 0x5687 + 0x32 = 22151 + 50 = 22201 = 0x56b9
+		let expected = 22201;
 		assert_eq!(cpu.get_operand_address(&AddressingMode::AbsoluteY), expected);
 	}
 

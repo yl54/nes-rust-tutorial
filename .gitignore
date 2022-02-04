@@ -16,3 +16,7 @@ Cargo.lock
 
 /target
 #**/*.rs.bk
+
+
+# These files will always be fake text files.
+*.fake.txt

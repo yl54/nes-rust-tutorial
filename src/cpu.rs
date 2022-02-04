@@ -785,7 +785,9 @@ mod test {
 
 		// Get the pointer.
 		// Add x to the value stored on the pc's address.
-		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+		// let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+		// 0x43 + 0x01 = 0x44
+		let ptr = 0x44 as u8;
 
 		// Set the address of the pc's address value to some value.
 		cpu.mem[ptr as usize] = 0x23;
@@ -815,7 +817,9 @@ mod test {
 
 		// Get the pointer.
 		// Add x to the value stored on the pc's address.
-		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+		// let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.x);
+		// 0xff + 0x43 -> 0x42
+		let ptr = 0x42 as u8;
 
 		// Set the address of the pc's address value to some value.
 		cpu.mem[ptr as usize] = 0x23; 
@@ -849,7 +853,9 @@ mod test {
 
 		// Get the pointer.
 		// Add y to the value stored on the pc's address.
-		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		// let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		// 0x22 + 0x01 = 0x23
+		let ptr = 0x23 as u8;
 
 		// Set the address of the pc + y address value to some value.
 		cpu.mem[ptr as usize] = 0x42;
@@ -880,7 +886,9 @@ mod test {
 
 		// Get the pointer.
 		// Add y to the value stored on the pc's address.
-		let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		// let ptr = cpu.mem[cpu.pc as usize].wrapping_add(cpu.y);
+		// 0xdd + 0xff -> 0xdc
+		let ptr = 0xdc as u8;
 		
 		// Set the address of the pc + y address value to some value.
 		cpu.mem[ptr as usize] = 0x47;

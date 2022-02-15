@@ -1,5 +1,6 @@
 // import
 use crate::addressing_mode::AddressingMode;
+use std::collections::HashMap;
 
 // opcode struct
 pub struct OpCode {
@@ -46,5 +47,12 @@ lazy_static! {
 		OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
 	];
 
-	// function to create hash table
+	// function to create hash table from code to OpCode
+	pub static ref OP_CODE_MAP: HashMap<u8, &'static OpCode> = {
+		let mut map: HashMap<u8, &'static OpCode> = HashMap::new();
+		for opCode in &*CPU_OP_CODES {
+			map.insert(opCode.code, opCode);
+		}
+		map 
+	};
 }

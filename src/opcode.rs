@@ -9,7 +9,7 @@ pub struct OpCode {
 
 	// mnemonic
 	// This is the string representation of the op code.
-	pub mnemonic: String,
+	pub mnemonic: &'static str,
 
 	// len
 	// this is the number of bytes read
@@ -28,7 +28,7 @@ pub struct OpCode {
 // impl
 impl OpCode {
 	// new function
-	pub fn new(code: u8, mnemonic: String, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+	pub fn new(code: u8, mnemonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
 		OpCode {
 			code: code,
 			mnemonic: mnemonic,
@@ -40,6 +40,11 @@ impl OpCode {
 }
 
 // lazy static inits
+lazy_static! {
 	// opcode table
+	pub static ref CPU_OP_CODES: Vec<OpCode> = vec![
+		OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+	];
 
 	// function to create hash table
+}

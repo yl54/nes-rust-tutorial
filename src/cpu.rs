@@ -1,38 +1,4 @@
- // TODO: Implement this in another MR.
-// Addressing Modes
-pub enum AddressingMode {
-	// List of Addressing Modes in Enum listing
-
-	// Immediate
-	Immediate,
-
-	// Zero Page
-	ZeroPage,
-
-	// Zero Page X
-	ZeroPageX,
-
-	// Zero Page Y
-	ZeroPageY,
-
-	// Absolute
-	Absolute,
-
-	// Absolute X
-	AbsoluteX,
-
-	// Absolute Y
-	AbsoluteY,
-
-	// Indirect X
-	IndirectX,
-
-	// Indirect Y
-	IndirectY,
-
-	// None Addressing
-	NoneAddressing,
-}
+use crate::addressing_mode::AddressingMode;
 
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.

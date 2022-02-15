@@ -1,4 +1,6 @@
 pub mod cpu;
+pub mod addressing_mode;
+pub mod opcode;
 use cpu::CPU;
 
 fn main() {

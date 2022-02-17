@@ -275,15 +275,12 @@ impl CPU {
 			// Increment pc.
 			self.pc += 1;
 
-			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
-
 			// Execute based off of the ops code.
+			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
 			match code_info.code {
-				// Handle ops code LDA (0xA9).
+				// Handle ops code LDA.
 				0xA9 => {
-					// Get the param input from the next instruction.
-					let param = self.mem_read(self.pc);
-					self.lda(param);
+					self.lda(&code_info.mode);
 				}
 
 				// Handle ops code TAX (0xAA)
@@ -311,9 +308,16 @@ impl CPU {
 
 	// -------- Handle Opscodes --------
 
-	// lda handles ops code LDA (0xA9).
+	// lda handles ops code LDA.
+	// 0xA9
 	// LDA is Load Accumulator.
-	fn lda(&mut self, value: u8) {
+	fn lda(&mut self, mode: &AddressingMode) {
+		// Get the address of where the value is stored.
+		let addr = self.get_operand_address(mode);
+
+		// Get the value from the address indicated by the addressing mode.
+		let value = self.mem_read(addr);
+		
 		// Fill the A register with the param.
 		self.a = value;
 

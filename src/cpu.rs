@@ -1,39 +1,5 @@
- // TODO: Implement this in another MR.
-// Addressing Modes
-pub enum AddressingMode {
-	// List of Addressing Modes in Enum listing
-
-	// Immediate
-	Immediate,
-
-	// Zero Page
-	ZeroPage,
-
-	// Zero Page X
-	ZeroPageX,
-
-	// Zero Page Y
-	ZeroPageY,
-
-	// Absolute
-	Absolute,
-
-	// Absolute X
-	AbsoluteX,
-
-	// Absolute Y
-	AbsoluteY,
-
-	// Indirect X
-	IndirectX,
-
-	// Indirect Y
-	IndirectY,
-
-	// None Addressing
-	NoneAddressing,
-}
-
+use crate::addressing_mode::AddressingMode;
+use crate::opcode::OP_CODE_MAP;
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
 
@@ -310,16 +276,11 @@ impl CPU {
 			self.pc += 1;
 
 			// Execute based off of the ops code.
-			match opscode {
-				// Handle ops code LDA (0xA9).
+			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
+			match code_info.code {
+				// Handle ops code LDA.
 				0xA9 => {
-					// Get the param input from the next instruction.
-					let param = self.mem_read(self.pc);
-
-					// Increment pc.
-					self.pc += 1;
-
-					self.lda(param);
+					self.lda(&code_info.mode);
 				}
 
 				// Handle ops code TAX (0xAA)
@@ -333,17 +294,30 @@ impl CPU {
 					return;
 				}
 
-				// Handle ops code 2.
-				_ => {}
+				// No match was found. 
+				// This should be a panic. This should never happen.
+				_ => {
+					// panic
+				}
 			}
+
+			// Increment the pc to pc + (opcode.len - 1)
+			self.pc += ((code_info.len - 1) as u16);
 		}
 	}
 
 	// -------- Handle Opscodes --------
 
-	// lda handles ops code LDA (0xA9).
+	// lda handles ops code LDA.
+	// 0xA9
 	// LDA is Load Accumulator.
-	fn lda(&mut self, value: u8) {
+	fn lda(&mut self, mode: &AddressingMode) {
+		// Get the address of where the value is stored.
+		let addr = self.get_operand_address(mode);
+
+		// Get the value from the address indicated by the addressing mode.
+		let value = self.mem_read(addr);
+		
 		// Fill the A register with the param.
 		self.a = value;
 

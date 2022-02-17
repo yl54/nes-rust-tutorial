@@ -45,13 +45,21 @@ lazy_static! {
 	// opcode table
 	pub static ref CPU_OP_CODES: Vec<OpCode> = vec![
 		OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+
+		// --------- Loads -----------
+
+		OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
+		
+		// --------- Register Flags -----------
+
+		OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
 	];
 
 	// function to create hash table from code to OpCode
 	pub static ref OP_CODE_MAP: HashMap<u8, &'static OpCode> = {
 		let mut map: HashMap<u8, &'static OpCode> = HashMap::new();
-		for opCode in &*CPU_OP_CODES {
-			map.insert(opCode.code, opCode);
+		for op_code in &*CPU_OP_CODES {
+			map.insert(op_code.code, op_code);
 		}
 		map 
 	};

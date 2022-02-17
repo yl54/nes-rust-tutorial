@@ -1,5 +1,5 @@
 use crate::addressing_mode::AddressingMode;
-
+use crate::opcode::OP_CODE_MAP;
 // A Table-like reference to hold information about ops codes.
 // TODO: Implement this in another MR.
 
@@ -275,16 +275,14 @@ impl CPU {
 			// Increment pc.
 			self.pc += 1;
 
+			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
+
 			// Execute based off of the ops code.
-			match opscode {
+			match code_info.code {
 				// Handle ops code LDA (0xA9).
 				0xA9 => {
 					// Get the param input from the next instruction.
 					let param = self.mem_read(self.pc);
-
-					// Increment pc.
-					self.pc += 1;
-
 					self.lda(param);
 				}
 
@@ -299,9 +297,15 @@ impl CPU {
 					return;
 				}
 
-				// Handle ops code 2.
-				_ => {}
+				// No match was found. 
+				// This should be a panic. This should never happen.
+				_ => {
+					// panic
+				}
 			}
+
+			// Increment the pc to pc + (opcode.len - 1)
+			self.pc += ((code_info.len - 1) as u16);
 		}
 	}
 

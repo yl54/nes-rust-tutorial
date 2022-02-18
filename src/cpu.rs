@@ -899,6 +899,8 @@ mod test {
 
     // -------- LDA --------
 
+    // -------- Immediate --------
+
     #[test]
     fn test_lda_immediate_happy_path() {
         // Create a CPU.
@@ -958,9 +960,8 @@ mod test {
 
     // TODO: Add the lda test sets here
 
-    // zero page
+    // -------- Zero Page --------
 
-    // TODO: Figure out how to get a reference to 0x8005 when we can only input u8 values into the program
     // TODO: Add a program in the future that loads stuff into RAM formally, not with hack.
     // Q: How do I load stuff into RAM?
 
@@ -969,6 +970,7 @@ mod test {
         // Create a CPU.
         let mut cpu = CPU::new();
 
+        // Set a location on RAM to be some value.
         cpu.mem[0x0005] = 0x43;
 
         // Load and run a short program.
@@ -983,6 +985,50 @@ mod test {
         // - Check the Zero Flag is not set.
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_lda_zeropage_negative_input() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Set a location on RAM to be some value.
+        cpu.mem[0x0005] = 0xf6;
+
+        // Load and run a short program.
+        // 1. Load a negative value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa5, 0x05, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf6);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_lda_zeropage_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Set a location on RAM to be some value.
+        cpu.mem[0x0005] = 0x00;
+
+        // Load and run a short program.
+        // 1. Load zero into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa5, 0x05, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
     // zero page x

@@ -899,7 +899,7 @@ mod test {
     // -------- LDA --------
 
     #[test]
-    fn test_lda_happy_path() {
+    fn test_lda_immediate_happy_path() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -918,7 +918,7 @@ mod test {
     }
 
     #[test]
-    fn test_lda_negative_input() {
+    fn test_lda_immediate_negative_input() {
         // Create a CPU.
         let mut cpu = CPU::new();
 
@@ -937,7 +937,7 @@ mod test {
     }
 
     #[test]
-    fn test_lda_zero() {
+    fn test_lda_immediate_zero() {
         // Create a CPU.
         let mut cpu = CPU::new();
 

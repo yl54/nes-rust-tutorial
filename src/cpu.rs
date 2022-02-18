@@ -408,6 +408,16 @@ mod test {
     }
 
     #[test]
+	#[should_panic]
+    fn test_load_and_run_unknown_opcode() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a program that has an empty op code.
+    	cpu.load_and_run(vec![0xf1]);
+    }
+
+    #[test]
     fn test_load_happy_path() {
     	// Create a CPU.
     	let mut cpu = CPU::new();

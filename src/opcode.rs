@@ -49,6 +49,7 @@ lazy_static! {
 		// --------- Loads -----------
 
 		OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
+		OpCode::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
 		
 		// --------- Register Flags -----------
 

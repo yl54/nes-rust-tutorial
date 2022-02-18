@@ -278,8 +278,9 @@ impl CPU {
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
 			match code_info.code {
+				// TODO: Add the other ops codes here for lda
 				// Handle ops code LDA.
-				0xA9 => {
+				0xA9 | 0xA5 => {
 					self.lda(&code_info.mode);
 				}
 
@@ -297,7 +298,7 @@ impl CPU {
 				// No match was found. 
 				// This should be a panic. This should never happen.
 				_ => {
-					// panic
+					panic!("no ops code match was found");
 				}
 			}
 
@@ -954,6 +955,50 @@ mod test {
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
+
+    // TODO: Add the lda test sets here
+
+    // zero page
+
+    // TODO: Figure out how to get a reference to 0x8005 when we can only input u8 values into the program
+    // TODO: Add a program in the future that loads stuff into RAM formally, not with hack.
+    // Q: How do I load stuff into RAM?
+
+    #[test]
+    fn test_lda_zeropage_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        cpu.mem[0x0005] = 0x43;
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa5, 0x05, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x43);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    // zero page x
+
+    // zero page y
+
+    // absolute
+
+    // absolute x
+
+    // absolute y
+
+    // indirect x
+
+    // indirect y
+
 
     // -------- TAX --------
 

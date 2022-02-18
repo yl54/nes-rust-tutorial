@@ -6,6 +6,10 @@ pub enum AddressingMode {
 	Immediate,
 
 	// Zero Page
+	// Lookup directly to first page of RAM
+	// First page of RAM = first 256 bytes
+	// Only the first page of RAM are accessible
+	// Supposed to be somewhat fast, since only need to lookup 1 byte.
 	ZeroPage,
 
 	// Zero Page X

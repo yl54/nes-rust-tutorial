@@ -284,6 +284,11 @@ impl CPU {
 					self.lda(&code_info.mode);
 				}
 
+				// Handle ops code LDX.
+				0xA2 => {
+					self.ldx(&code_info.mode);
+				}
+
 				// Handle ops code TAX (0xAA)
 				0xAA => self.tax(),
 
@@ -310,7 +315,6 @@ impl CPU {
 	// -------- Handle Opscodes --------
 
 	// lda handles ops code LDA.
-	// 0xA9
 	// LDA is Load Accumulator.
 	fn lda(&mut self, mode: &AddressingMode) {
 		// Get the address of where the value is stored.
@@ -324,6 +328,22 @@ impl CPU {
 
 		// Change the Processor Status Flags based off of the new A value
 		self.update_processor_flags(self.a);
+	}
+
+	// ldx handles ops code LDX.
+	// LDXis Load X.
+	fn ldx(&mut self, mode: &AddressingMode) {
+		// Get the address of where the value is stored.
+		let addr = self.get_operand_address(mode);
+
+		// Get the value from the address indicated by the addressing mode.
+		let value = self.mem_read(addr);
+		
+		// Fill the X register with the param.
+		self.x = value;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
 	}
 
 	// tax handles the ops code TAX (0xAA).
@@ -1033,6 +1053,10 @@ mod test {
 
     // zero page x
 
+    // -------- Zero Page X --------
+
+    // TODO: Add a formal program to load up X
+
     // zero page y
 
     // absolute
@@ -1045,6 +1069,65 @@ mod test {
 
     // indirect y
 
+
+    // -------- LDX --------
+
+    #[test]
+    fn test_ldx_immediate_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa2, 0x05, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.x, 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_ldx_immediate_negative_input() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a negative value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa2, 0xf5, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.x, 0xf5);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_ldx_immediate_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load zero into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xa2, 0x00, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.x, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
 
     // -------- TAX --------
 

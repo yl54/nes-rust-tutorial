@@ -297,6 +297,9 @@ impl CPU {
 				// Handle ops code TAX (0xAA)
 				0xAA => self.tax(),
 
+				// Handle ops code TXA (0x8A)
+				0x8A => self.txa(),
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -375,6 +378,16 @@ impl CPU {
 
 		// Change the Processor Status Flags based off of the new X value
 		self.update_processor_flags(self.x);
+	}
+
+	// txa handles the ops code TAX (0x8A).
+	// TXA copies the value from the X register to the A register.
+	fn txa(&mut self) {
+		// Copy the value from A register into the X register.
+		self.a = self.x;
+
+		// Change the Processor Status Flags based off of the new A value
+		self.update_processor_flags(self.a);
 	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -1229,6 +1242,28 @@ mod test {
 
     	// Check the X register has the expected value.
     	assert_eq!(cpu.x, 0x05);
+        
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    // -------- TXA --------
+
+    #[test]
+    fn test_txa_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+        // Load and run a short program.
+    	// 1. Load a positive value into the X register.
+    	// 2. Copy value from X register into A register.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x05, 0x8a, 0x00]);
+
+    	// Check the X register has the expected value.
+    	assert_eq!(cpu.a, 0x05);
         
         // Check the processor status is expected:
         // - Check the Zero Flag is not set.

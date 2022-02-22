@@ -297,6 +297,9 @@ impl CPU {
 				// Handle ops code TAX (0xAA)
 				0xAA => self.tax(),
 
+				// Handle ops code TAY (0xA8)
+				0xA8 => self.tay(),
+
 				// Handle ops code TXA (0x8A)
 				0x8A => self.txa(),
 
@@ -380,10 +383,20 @@ impl CPU {
 		self.update_processor_flags(self.x);
 	}
 
+	// tay handles the ops code TAY (0xA8).
+	// TAY copies the value from the A register to the Y register.
+	fn tay(&mut self) {
+		// Copy the value from A register into the Y register.
+		self.y = self.a;
+
+		// Change the Processor Status Flags based off of the new Y value
+		self.update_processor_flags(self.y);
+	}
+
 	// txa handles the ops code TAX (0x8A).
 	// TXA copies the value from the X register to the A register.
 	fn txa(&mut self) {
-		// Copy the value from A register into the X register.
+		// Copy the value from X register into the A register.
 		self.a = self.x;
 
 		// Change the Processor Status Flags based off of the new A value
@@ -1228,6 +1241,7 @@ mod test {
 
 
     // -------- TAX --------
+    // TODO: Add negative test, add zero test
 
     #[test]
     fn test_tax_happy_path() {
@@ -1242,6 +1256,28 @@ mod test {
 
     	// Check the X register has the expected value.
     	assert_eq!(cpu.x, 0x05);
+        
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    // -------- TAY --------
+
+    #[test]
+    fn test_tay_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+        // Load and run a short program.
+    	// 1. Load a positive value into the A register.
+    	// 2. Copy value from A register into Y register.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x05, 0xa8, 0x00]);
+
+    	// Check the Y register has the expected value.
+    	assert_eq!(cpu.y, 0x05);
         
         // Check the processor status is expected:
         // - Check the Zero Flag is not set.

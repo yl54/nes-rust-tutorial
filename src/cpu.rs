@@ -303,6 +303,9 @@ impl CPU {
 				// Handle ops code TXA (0x8A)
 				0x8A => self.txa(),
 
+				// Handle ops code TYA (0x98)
+				0x98 => self.tya(),
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -393,11 +396,21 @@ impl CPU {
 		self.update_processor_flags(self.y);
 	}
 
-	// txa handles the ops code TAX (0x8A).
+	// txa handles the ops code TXA (0x8A).
 	// TXA copies the value from the X register to the A register.
 	fn txa(&mut self) {
 		// Copy the value from X register into the A register.
 		self.a = self.x;
+
+		// Change the Processor Status Flags based off of the new A value
+		self.update_processor_flags(self.a);
+	}
+
+	// tya handles the ops code TYA (0x98).
+	// TYA copies the value from the Y register to the A register.
+	fn tya(&mut self) {
+		// Copy the value from Y register into the A register.
+		self.a = self.y;
 
 		// Change the Processor Status Flags based off of the new A value
 		self.update_processor_flags(self.a);
@@ -1298,7 +1311,29 @@ mod test {
     	// 3. Break.
     	cpu.load_and_run(vec![0xa2, 0x05, 0x8a, 0x00]);
 
-    	// Check the X register has the expected value.
+    	// Check the A register has the expected value.
+    	assert_eq!(cpu.a, 0x05);
+        
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    // -------- TYA --------
+
+    #[test]
+    fn test_tya_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+        // Load and run a short program.
+    	// 1. Load a positive value into the Y register.
+    	// 2. Copy value from Y register into A register.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa0, 0x05, 0x98, 0x00]);
+
+    	// Check the A register has the expected value.
     	assert_eq!(cpu.a, 0x05);
         
         // Check the processor status is expected:

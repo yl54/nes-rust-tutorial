@@ -1418,4 +1418,10 @@ mod test {
     	// - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
+
+    // test negative
+
+    // test zero to negative
+
+    // test zero
 }

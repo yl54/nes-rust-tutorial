@@ -58,7 +58,11 @@ lazy_static! {
 		// --------- Register Flags -----------
 
 		OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
+		OpCode::new(0xa8, "TAY", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0x8a, "TXA", 1, 2, AddressingMode::NoneAddressing),
+		OpCode::new(0x98, "TYA", 1, 2, AddressingMode::NoneAddressing),
+		OpCode::new(0xca, "DEX", 1, 2, AddressingMode::NoneAddressing),
+		OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
 	];
 
 	// function to create hash table from code to OpCode

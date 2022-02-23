@@ -306,6 +306,9 @@ impl CPU {
 				// Handle ops code TYA (0x98)
 				0x98 => self.tya(),
 
+				// Handle ops code DEX (0xca)
+				0xca => self.dex(),
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -416,7 +419,19 @@ impl CPU {
 		self.update_processor_flags(self.a);
 	}
 
+	// dex handles the ops code DEX (0xCA).
+	// DEX decrements the X register value by 1.
+	// q: what happens if its already 0?
+	fn dex(&mut self) {
+		// Decrement X by 1.
+		self.x = self.x - 1;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
+
 	// update_processor_flags change the Processor Status Flags based off of the new A values
+	// TODO: Figure out a nicer way to refactor processor flags.
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
 		if result == 0 {
@@ -1140,11 +1155,11 @@ mod test {
         let mut cpu = CPU::new();
 
         // Load and run a short program.
-        // 1. Load a positive value into A register.
+        // 1. Load a positive value into X register.
         // 2. Break.
         cpu.load_and_run(vec![0xa2, 0x05, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0x05);
 
         // Check the processor status is expected:
@@ -1159,11 +1174,11 @@ mod test {
         let mut cpu = CPU::new();
 
         // Load and run a short program.
-        // 1. Load a negative value into A register.
+        // 1. Load a negative value into X register.
         // 2. Break.
         cpu.load_and_run(vec![0xa2, 0xf5, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0xf5);
 
         // Check the processor status is expected:
@@ -1178,11 +1193,11 @@ mod test {
         let mut cpu = CPU::new();
 
         // Load and run a short program.
-        // 1. Load zero into A register.
+        // 1. Load zero into X register.
         // 2. Break.
         cpu.load_and_run(vec![0xa2, 0x00, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0x00);
 
         // Check the processor status is expected:
@@ -1341,4 +1356,27 @@ mod test {
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
+
+    // -------- DEX --------
+
+    #[test]
+    fn test_dex_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load a positive value into the X register.
+    	// 2. Decrement X.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa2, 0x34, 0xca, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.x, 0x33);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
 }

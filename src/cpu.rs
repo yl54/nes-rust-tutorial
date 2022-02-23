@@ -309,6 +309,9 @@ impl CPU {
 				// Handle ops code DEX (0xca)
 				0xca => self.dex(),
 
+				// Handle ops code DEY (0x88)
+				0x88 => self.dey(),
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -421,13 +424,22 @@ impl CPU {
 
 	// dex handles the ops code DEX (0xCA).
 	// DEX decrements the X register value by 1.
-	// q: what happens if its already 0?
 	fn dex(&mut self) {
 		// Decrement X by 1.
-		self.x = self.x - 1;
+		self.x = self.x.wrapping_sub(1);
 
 		// Change the Processor Status Flags based off of the new X value
 		self.update_processor_flags(self.x);
+	}
+
+	// dey handles the ops code DEY (0x88).
+	// DEY decrements the Y register value by 1.
+	fn dey(&mut self) {
+		// Decrement Y by 1.
+		self.y = self.y.wrapping_sub(1);
+
+		// Change the Processor Status Flags based off of the new Y value
+		self.update_processor_flags(self.y);
 	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -1379,4 +1391,31 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
+    // test negative
+
+    // test zero to negative
+
+    // test zero
+
+    // -------- DEY --------
+
+    #[test]
+    fn test_dey_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load a positive value into the Y register.
+    	// 2. Decrement Y.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa0, 0x34, 0x88, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.y, 0x33);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 }

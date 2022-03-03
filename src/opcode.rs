@@ -65,6 +65,7 @@ lazy_static! {
 		OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
 
 		// INX
+		OpCode::new(0xe8, "INX", 1, 2, AddressingMode::NoneAddressing),
 
 		// INY
 	];

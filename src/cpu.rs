@@ -311,6 +311,7 @@ impl CPU {
 				0x88 => self.dey(),
 
 				// Handle ops code INX (0xE8)
+				0xE8 => self.inx(),
 
 				// Handle ops code INY (0xC8)
 
@@ -445,7 +446,15 @@ impl CPU {
 		self.update_processor_flags(self.y);
 	}
 
-	// inx
+	// inx handles the ops code INX (0xE8).
+	// INX increments the X register value by 1.
+	fn inx(&mut self) {
+		// Increment X by 1.
+		self.x = self.x.wrapping_add(1);
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
 
 	// iny
 
@@ -1434,7 +1443,25 @@ mod test {
 
     // -------- INX --------
 
-    // test happy path
+    #[test]
+    fn test_inx_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load a positive value into the X register.
+    	// 2. Increment X.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa2, 0x34, 0xe8, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.x, 0x35);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
     // test negative
 

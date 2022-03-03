@@ -34,7 +34,7 @@ pub struct CPU {
 	 * 8 bit register represents 7 status flags.
 	 * Each one is toggled depending on operation.
 	 * 
-	 * 7 N Negative
+	 * 7 N Negative- It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
 	 * 6 V Overflow
 	 * 5 - (Expansion)
 	 * 4 B Break Command
@@ -1471,11 +1471,65 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
-    // test negative
+	#[test]
+    fn test_inx_negative_to_negative() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
 
-    // test zero to negative
+    	// Load and run a short program.
+    	// 1. Load an 8 bit value with the 8th bit set into the X register.
+    	// 2. Increment X.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa2, 0xf4, 0xe8, 0x00]);
 
-    // test zero
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.x, 0xf5);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_inx_negative_to_zero() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load the max value into the X register.
+    	// 2. Increment X.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa2, 0xff, 0xe8, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.x, 0x00);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
+
+    #[test]
+    fn test_inx_zero_to_positive() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load 0 into the X register.
+    	// 2. Increment X.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa2, 0x00, 0xe8, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.x, 0x01);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
     // -------- INY --------
 

@@ -314,6 +314,7 @@ impl CPU {
 				0xE8 => self.inx(),
 
 				// Handle ops code INY (0xC8)
+				0xC8 => self.iny(),
 
 
 				// Handle ops code BRK (0x00).
@@ -456,10 +457,17 @@ impl CPU {
 		self.update_processor_flags(self.x);
 	}
 
-	// iny
+	// iny handles the ops code INY (0xE8).
+	// INY increments the Y register value by 1.
+	fn iny(&mut self) {
+		// Increment Y by 1.
+		self.y = self.y.wrapping_add(1);
+
+		// Change the Processor Status Flags based off of the new Y value
+		self.update_processor_flags(self.y);
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
-	// TODO: Figure out a nicer way to refactor processor flags.
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
 		if result == 0 {
@@ -1471,7 +1479,25 @@ mod test {
 
     // -------- INY --------
 
-    // test happy path
+    #[test]
+    fn test_iny_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load a positive value into the Y register.
+    	// 2. Increment Y.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa0, 0x34, 0xc8, 0x00]);
+
+    	// Check that the X register has the expected value.
+    	assert_eq!(cpu.y, 0x35);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
     // test negative
 

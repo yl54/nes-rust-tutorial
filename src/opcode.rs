@@ -63,6 +63,10 @@ lazy_static! {
 		OpCode::new(0x98, "TYA", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0xca, "DEX", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
+
+		// INX
+
+		// INY
 	];
 
 	// function to create hash table from code to OpCode

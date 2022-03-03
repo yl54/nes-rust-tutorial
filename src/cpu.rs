@@ -1,7 +1,5 @@
 use crate::addressing_mode::AddressingMode;
 use crate::opcode::OP_CODE_MAP;
-// A Table-like reference to hold information about ops codes.
-// TODO: Implement this in another MR.
 
 // Q: Is it worth having a handler object per ops code?
 // A: Probably not. The logic is too interwined with the CPU.
@@ -312,6 +310,11 @@ impl CPU {
 				// Handle ops code DEY (0x88)
 				0x88 => self.dey(),
 
+				// Handle ops code INX (0xE8)
+
+				// Handle ops code INY (0xC8)
+
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -441,6 +444,10 @@ impl CPU {
 		// Change the Processor Status Flags based off of the new Y value
 		self.update_processor_flags(self.y);
 	}
+
+	// inx
+
+	// iny
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	// TODO: Figure out a nicer way to refactor processor flags.
@@ -1424,4 +1431,25 @@ mod test {
     // test zero to negative
 
     // test zero
+
+    // -------- INX --------
+
+    // test happy path
+
+    // test negative
+
+    // test zero to negative
+
+    // test zero
+
+    // -------- INY --------
+
+    // test happy path
+
+    // test negative
+
+    // test zero to negative
+
+    // test zero
+
 }

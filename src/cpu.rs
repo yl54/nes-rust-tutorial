@@ -1553,10 +1553,63 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
-    // test negative
+    #[test]
+    fn test_iny_negative_to_negative() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
 
-    // test zero to negative
+    	// Load and run a short program.
+    	// 1. Load an 8 bit value with the 8th bit set into the Y register.
+    	// 2. Increment Y.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa0, 0xf4, 0xc8, 0x00]);
 
-    // test zero
+    	// Check that the Y register has the expected value.
+    	assert_eq!(cpu.y, 0xf5);
 
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_iny_negative_to_zero() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load the max value into the Y register.
+    	// 2. Increment Y.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa0, 0xff, 0xc8, 0x00]);
+
+    	// Check that the Y register has the expected value.
+    	assert_eq!(cpu.y, 0x00);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
+
+    #[test]
+    fn test_iny_zero_to_positive() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load 0 into the Y register.
+    	// 2. Increment Y.
+    	// 3. Break
+    	cpu.load_and_run(vec![0xa0, 0x00, 0xc8, 0x00]);
+
+    	// Check that the Y register has the expected value.
+    	assert_eq!(cpu.y, 0x01);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is not set.
+    	// - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 }

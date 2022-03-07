@@ -317,6 +317,7 @@ impl CPU {
 				0xC8 => self.iny(),
 
 				// Handle ops code CLC (0x18)
+				0x18 => self.clc(),
 
 				// Handle ops code CLV (0xB8)
 
@@ -471,6 +472,16 @@ impl CPU {
 		// Change the Processor Status Flags based off of the new Y value
 		self.update_processor_flags(self.y);
 	}
+
+	// clc handles the ops code CLC (0x18).
+	// clc clears the carry bit. It sets it to 0.
+	fn clc(&mut self) {
+		self.p = self.p & 0b1111_1110;
+	}
+
+	// CLV
+
+	// CLD
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1036,12 +1047,6 @@ mod test {
     // ----------------------------------
     // --------- Ops Code Tests ---------
     // ----------------------------------
-
-    // CLC
-
-    // CLV
-
-    // CLD
 
     // -------- LDA --------
 
@@ -1893,4 +1898,33 @@ mod test {
     	// - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
+
+    // TODO: Add a proper program to check as well. This one is a bit hacky.
+    #[test]
+    fn test_clc_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+    	cpu.reset();
+
+    	// Set the processor flag to have every bit set.
+    	cpu.p = 0b1111_1111;
+    	
+    	// Load and run a short program.
+    	// 1. Clear Carry bit.
+    	// 2. Break
+    	cpu.load(vec![0x18, 0x00]);
+		cpu.pc = cpu.mem_read_u16(0xFFFC);
+    	cpu.run();
+
+    	// Check that the processor status is expected.
+    	// - Carry bit is not are set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1111_1110);   	
+    }
+
+    // CLC test with all bits set
+
+    // CLV
+
+    // CLD
 }

@@ -49,6 +49,7 @@ lazy_static! {
 		// --------- Processor Status Instructions ----------
 
 		// CLC
+		OpCode::new(0x18, "CLC", 1, 2, AddressingMode::NoneAddressing),
 
 		// CLD
 

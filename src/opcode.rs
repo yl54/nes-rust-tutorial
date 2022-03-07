@@ -46,6 +46,14 @@ lazy_static! {
 	pub static ref CPU_OP_CODES: Vec<OpCode> = vec![
 		OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
 
+		// --------- Processor Status Instructions ----------
+
+		// CLC
+
+		// CLD
+
+		// CLV
+
 		// --------- Loads -----------
 
 		OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),

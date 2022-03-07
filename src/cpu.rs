@@ -316,6 +316,11 @@ impl CPU {
 				// Handle ops code INY (0xC8)
 				0xC8 => self.iny(),
 
+				// Handle ops code CLC (0x18)
+
+				// Handle ops code CLV (0xB8)
+
+				// Handle ops code CLD (0xD8)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -1027,6 +1032,16 @@ mod test {
 		let mut cpu = CPU::new();
 		cpu.get_operand_address(&AddressingMode::NoneAddressing);
 	}
+
+    // ----------------------------------
+    // --------- Ops Code Tests ---------
+    // ----------------------------------
+
+    // CLC
+
+    // CLV
+
+    // CLD
 
     // -------- LDA --------
 

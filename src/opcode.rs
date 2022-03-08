@@ -52,10 +52,8 @@ lazy_static! {
 		OpCode::new(0xd8, "CLD", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0xb8, "CLV", 1, 2, AddressingMode::NoneAddressing),
 
-		// sec
 		OpCode::new(0x38, "SEC", 1, 2, AddressingMode::NoneAddressing),
-
-		// sed
+		OpCode::new(0xf8, "SED", 1, 2, AddressingMode::NoneAddressing),
 
 		// --------- Loads -----------
 

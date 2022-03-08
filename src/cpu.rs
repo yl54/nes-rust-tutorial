@@ -325,6 +325,12 @@ impl CPU {
 				// Handle ops code CLV (0xB8)
 				0xB8 => self.clv(),
 
+				// Handle ops code SEC (0x38)
+				0x38 => self.sec(),
+
+				// Handle ops code SED (0xF8)
+				0xF8 => self.sed(),
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -491,6 +497,18 @@ impl CPU {
 	// clv clears the overflow bit. It sets it to 0.
 	fn clv(&mut self) {
 		self.p = self.p & 0b1011_1111;
+	}
+
+	// sec handles the ops code SEC (0x38).
+	// sec sets the carry bit. It sets it to 1.
+	fn sec(&mut self) {
+		self.p = self.p | 0b0000_0001;
+	}
+
+	// sed handles the ops code SED (0xF8).
+	// sec sets the decimal bit. It sets it to 1.
+	fn sed(&mut self) {
+		self.p = self.p | 0b0000_1000;
 	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -1983,5 +2001,41 @@ mod test {
     	// - Decimal bit is not set.
     	// - All other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b1011_1111);   	
+    }
+
+    // -------- SEC --------
+
+    #[test]
+    fn test_sec_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Set Carry bit.
+    	// 2. Break
+    	cpu.load_and_run(vec![0x38, 0x00]);
+
+    	// Check that the processor status is expected.
+    	// - Decimal bit is not set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0001);   	
+    }
+
+    // -------- SED --------
+    
+    #[test]
+    fn test_sed_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Set Decimal bit.
+    	// 2. Break
+    	cpu.load_and_run(vec![0xf8, 0x00]);
+
+    	// Check that the processor status is expected.
+    	// - Decimal bit is not set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_1000);   	
     }
 }

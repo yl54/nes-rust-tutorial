@@ -326,6 +326,7 @@ impl CPU {
 				0xB8 => self.clv(),
 
 				// Handle ops code SEC (0x38)
+				0x38 => self.sec(),
 
 				// Handle ops code SED (0xF8)
 
@@ -497,7 +498,11 @@ impl CPU {
 		self.p = self.p & 0b1011_1111;
 	}
 
-	// sec
+	// sec handles the ops code SEC (0x38).
+	// sec sets the carry bit. It sets it to 1.
+	fn sec(&mut self) {
+		self.p = self.p | 0b0000_0001;
+	}
 
 	// sed
 
@@ -1994,6 +1999,22 @@ mod test {
     }
 
     // -------- SEC --------
+
+    #[test]
+    fn test_sec_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Set Carry bit.
+    	// 2. Break
+    	cpu.load_and_run(vec![0x38, 0x00]);
+
+    	// Check that the processor status is expected.
+    	// - Decimal bit is not set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0001);   	
+    }
 
     // -------- SED --------
 

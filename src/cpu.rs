@@ -325,6 +325,10 @@ impl CPU {
 				// Handle ops code CLV (0xB8)
 				0xB8 => self.clv(),
 
+				// Handle ops code SEC (0x38)
+
+				// Handle ops code SED (0xF8)
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -492,6 +496,10 @@ impl CPU {
 	fn clv(&mut self) {
 		self.p = self.p & 0b1011_1111;
 	}
+
+	// sec
+
+	// sed
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1984,4 +1992,9 @@ mod test {
     	// - All other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b1011_1111);   	
     }
+
+    // -------- SEC --------
+
+    // -------- SED --------
+
 }

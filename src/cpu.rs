@@ -305,7 +305,7 @@ impl CPU {
 				0x98 => self.tya(),
 
 				// Handle ops code DEX (0xca)
-				0xca => self.dex(),
+				0xCA => self.dex(),
 
 				// Handle ops code DEY (0x88)
 				0x88 => self.dey(),
@@ -319,9 +319,10 @@ impl CPU {
 				// Handle ops code CLC (0x18)
 				0x18 => self.clc(),
 
-				// Handle ops code CLV (0xB8)
-
 				// Handle ops code CLD (0xD8)
+				0xD8 => self.cld(),
+
+				// Handle ops code CLV (0xB8)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -479,9 +480,13 @@ impl CPU {
 		self.p = self.p & 0b1111_1110;
 	}
 
-	// CLV
+	// cld handles the ops code CLD (0xD8).
+	// cld clears the decimal bit. It sets it to 0.
+	fn cld(&mut self) {
+		self.p = self.p & 0b1111_0111;
+	}
 
-	// CLD
+	// CLV
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1899,6 +1904,9 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
+
+    // -------- CLC --------
+
     // TODO: Add a proper program to check as well. This one is a bit hacky.
     #[test]
     fn test_clc_happy_path() {
@@ -1917,14 +1925,36 @@ mod test {
     	cpu.run();
 
     	// Check that the processor status is expected.
-    	// - Carry bit is not are set.
+    	// - Carry bit is not set.
     	// - All other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b1111_1110);   	
     }
 
-    // CLC test with all bits set
+    // CLD
+    // -------- CLD --------
+
+	// TODO: Add a proper program to check as well. This one is a bit hacky.
+    #[test]
+    fn test_cld_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+    	cpu.reset();
+
+    	// Set the processor flag to have every bit set.
+    	cpu.p = 0b1111_1111;
+    	
+    	// Load and run a short program.
+    	// 1. Clear Decimal bit.
+    	// 2. Break
+    	cpu.load(vec![0xd8, 0x00]);
+		cpu.pc = cpu.mem_read_u16(0xFFFC);
+    	cpu.run();
+
+    	// Check that the processor status is expected.
+    	// - Decimal bit is not set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1111_0111);   	
+    }
 
     // CLV
-
-    // CLD
 }

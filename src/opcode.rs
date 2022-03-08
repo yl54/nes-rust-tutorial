@@ -48,13 +48,9 @@ lazy_static! {
 
 		// --------- Processor Status Instructions ----------
 
-		// CLC
 		OpCode::new(0x18, "CLC", 1, 2, AddressingMode::NoneAddressing),
-
-		// CLD
 		OpCode::new(0xd8, "CLD", 1, 2, AddressingMode::NoneAddressing),
-
-		// CLV
+		OpCode::new(0xb8, "CLV", 1, 2, AddressingMode::NoneAddressing),
 
 		// --------- Loads -----------
 

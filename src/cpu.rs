@@ -323,6 +323,7 @@ impl CPU {
 				0xD8 => self.cld(),
 
 				// Handle ops code CLV (0xB8)
+				0xB8 => self.clv(),
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -486,7 +487,11 @@ impl CPU {
 		self.p = self.p & 0b1111_0111;
 	}
 
-	// CLV
+	// clv handles the ops code CLV (0xB8).
+	// clv clears the overflow bit. It sets it to 0.
+	fn clv(&mut self) {
+		self.p = self.p & 0b1011_1111;
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1930,7 +1935,6 @@ mod test {
         assert!(cpu.p & 0b1111_1111 == 0b1111_1110);   	
     }
 
-    // CLD
     // -------- CLD --------
 
 	// TODO: Add a proper program to check as well. This one is a bit hacky.
@@ -1956,5 +1960,28 @@ mod test {
         assert!(cpu.p & 0b1111_1111 == 0b1111_0111);   	
     }
 
-    // CLV
+    // -------- CLV --------
+
+    // TODO: Add a proper program to check as well. This one is a bit hacky.
+    #[test]
+    fn test_clv_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+    	cpu.reset();
+
+    	// Set the processor flag to have every bit set.
+    	cpu.p = 0b1111_1111;
+    	
+    	// Load and run a short program.
+    	// 1. Clear Overflow bit.
+    	// 2. Break
+    	cpu.load(vec![0xb8, 0x00]);
+		cpu.pc = cpu.mem_read_u16(0xFFFC);
+    	cpu.run();
+
+    	// Check that the processor status is expected.
+    	// - Decimal bit is not set.
+    	// - All other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1011_1111);   	
+    }
 }

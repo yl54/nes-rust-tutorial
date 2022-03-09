@@ -45,6 +45,7 @@ lazy_static! {
 	// opcode table
 	pub static ref CPU_OP_CODES: Vec<OpCode> = vec![
 		OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+		OpCode::new(0xea, "NOP", 1, 2, AddressingMode::NoneAddressing),
 
 		// --------- Processor Status Instructions ----------
 

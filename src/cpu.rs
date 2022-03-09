@@ -331,6 +331,11 @@ impl CPU {
 				// Handle ops code SED (0xF8)
 				0xF8 => self.sed(),
 
+				// Handle ops code NOP (0xEA)
+				0xEA => {
+					// do nothing
+				},
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -1076,6 +1081,29 @@ mod test {
     // --------- Ops Code Tests ---------
     // ----------------------------------
 
+    // -------- BRK and NOP --------
+
+    #[test]
+    fn test_brk_nop_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. No Op.
+        // 2. Break.
+        cpu.load_and_run(vec![0xea, 0x00]);
+
+        // Check the registers have the expected values.
+        assert_eq!(cpu.a, 0x00);
+        assert_eq!(cpu.x, 0x00);
+        assert_eq!(cpu.y, 0x00);
+        assert_eq!(cpu.s, 0x00);
+        assert_eq!(cpu.pc, 0x8002);
+
+        // Check the processor status is expected:
+        // - Check all flags are not set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
+    }
     // -------- LDA --------
 
     // -------- Immediate --------

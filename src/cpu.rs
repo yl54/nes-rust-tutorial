@@ -276,9 +276,9 @@ impl CPU {
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
 			match code_info.code {
-				// TODO: Add the other ops codes here for lda
 				// Handle ops code LDA.
-				0xA9 | 0xA5 => {
+				// lda absolute
+				0xA9 | 0xA5 | 0xAD => {
 					self.lda(&code_info.mode);
 				}
 
@@ -1104,6 +1104,7 @@ mod test {
         // - Check all flags are not set.
         assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
     }
+
     // -------- LDA --------
 
     // -------- Immediate --------
@@ -1238,15 +1239,71 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // zero page x
-
     // -------- Zero Page X --------
 
     // TODO: Add a formal program to load up X
 
     // zero page y
 
-    // absolute
+    // -------- Absolute --------
+
+    #[test]
+    fn test_lda_absolute_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xad, 0x07, 0x80, 0x00, 0xea, 0xea, 0xea, 0x57]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x57);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_lda_absolute_negative() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a negative value into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xad, 0x07, 0x80, 0x00, 0xea, 0xea, 0xea, 0xf6]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf6);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_lda_absolute_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load zero into A register.
+        // 2. Break.
+        cpu.load_and_run(vec![0xad, 0x08, 0x80, 0x00, 0xea, 0xea, 0xea, 0xea, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
+
 
     // absolute x
 

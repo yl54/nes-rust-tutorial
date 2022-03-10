@@ -275,6 +275,8 @@ impl CPU {
 
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
+
+			// TODO: Organize these alphabetically.
 			match code_info.code {
 				// Handle ops code LDA.
 				// lda absolute
@@ -336,6 +338,12 @@ impl CPU {
 					// do nothing
 				},
 
+				// Handle ops code STA
+
+				// Handle ops code STX
+				
+				// Handle ops code STY
+
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
 				// interrupt sequence. The program transfers control to the 
@@ -357,6 +365,7 @@ impl CPU {
 	}
 
 	// -------- Handle Opscodes --------
+	// TODO: organize these alphabetically
 
 	// lda handles ops code LDA.
 	// LDA is Load Accumulator.
@@ -515,6 +524,12 @@ impl CPU {
 	fn sed(&mut self) {
 		self.p = self.p | 0b0000_1000;
 	}
+
+	// sta
+
+	// stx
+	
+	// sty
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1172,6 +1187,7 @@ mod test {
 
     // TODO: Add a program in the future that loads stuff into RAM formally, not with hack.
     // Q: How do I load stuff into RAM?
+    // TODO: Replace the hack to store into memory with STA, STX, and STY
 
     #[test]
     fn test_lda_zeropage_happy_path() {

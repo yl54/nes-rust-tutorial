@@ -337,7 +337,7 @@ impl CPU {
 				0x85 | 0x8D | 0x95 | 0x9D | 0x99 => self.sta(&code_info.mode),
 
 				// Handle ops code STX
-				0x86 => self.stx(&code_info.mode),
+				0x86 | 0x96 => self.stx(&code_info.mode),
 				
 				// Handle ops code STY
 
@@ -1277,6 +1277,29 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
+	#[test]
+    fn test_stx_zeropagey_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into X register.
+        // 2. Load a positive value into Y register.
+        // 3. Store the value of the X register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa2, 0x05, 0xa0, 0x07, 0x96, 0x04, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.x, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x000b], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
     
     // -------- STY --------
 

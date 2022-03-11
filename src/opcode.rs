@@ -86,6 +86,7 @@ lazy_static! {
 
 		// STX
 		OpCode::new(0x86, "STX", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0x96, "STX", 2, 4, AddressingMode::ZeroPageY),
 
 		// STY
 	];

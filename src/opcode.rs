@@ -82,6 +82,7 @@ lazy_static! {
 		OpCode::new(0x95, "STA", 2, 4, AddressingMode::ZeroPageX),
 		OpCode::new(0x8d, "STA", 3, 4, AddressingMode::Absolute),
 		OpCode::new(0x9d, "STA", 3, 5, AddressingMode::AbsoluteX),
+		OpCode::new(0x99, "STA", 3, 5, AddressingMode::AbsoluteY),
 
 		// STX
 

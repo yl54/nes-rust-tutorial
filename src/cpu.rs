@@ -333,17 +333,17 @@ impl CPU {
 				// Handle ops code SED (0xF8)
 				0xF8 => self.sed(),
 
-				// Handle ops code NOP (0xEA)
-				0xEA => {
-					// do nothing
-				},
-
 				// Handle ops code STA
-				0x85 => self.sta(&code_info.mode),
+				0x85 | 0x8D => self.sta(&code_info.mode),
 
 				// Handle ops code STX
 				
 				// Handle ops code STY
+
+				// Handle ops code NOP (0xEA)
+				0xEA => {
+					// do nothing
+				},
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -1128,8 +1128,6 @@ mod test {
 
     // -------- STA --------
 
-    // Zero Page
-
     #[test]
     fn test_sta_zeropage_happy_path() {
         // Create a CPU.
@@ -1152,6 +1150,30 @@ mod test {
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
+
+     #[test]
+    fn test_sta_absolute_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Store the value of the A register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0x8d, 0x04, 0xea, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0xea04], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+    
     
     // -------- STX --------
     

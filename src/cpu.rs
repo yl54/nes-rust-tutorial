@@ -340,6 +340,7 @@ impl CPU {
 				0x86 | 0x96 | 0x8E => self.stx(&code_info.mode),
 				
 				// Handle ops code STY
+				0x84 => self.sty(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -542,6 +543,12 @@ impl CPU {
 	}
 	
 	// sty
+	// sty handles the ops code STY.
+	// sty stores the Y register value into memory.
+	fn sty(&mut self, mode: &AddressingMode) {
+		let addr = self.get_operand_address(mode);
+		self.mem_write(addr, self.y);
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1265,7 +1272,7 @@ mod test {
         // 3. Break.
         cpu.load_and_run(vec![0xa2, 0x05, 0x86, 0x04, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0x05);
 
         // Check that the memory space has the expected value.
@@ -1289,7 +1296,7 @@ mod test {
         // 4. Break.
         cpu.load_and_run(vec![0xa2, 0x05, 0xa0, 0x07, 0x96, 0x04, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0x05);
 
         // Check that the memory space has the expected value.
@@ -1312,7 +1319,7 @@ mod test {
         // 3. Break.
         cpu.load_and_run(vec![0xa2, 0x05, 0x8e, 0x04, 0x4a, 0x00]);
 
-        // Check the A register has the expected value.
+        // Check the X register has the expected value.
         assert_eq!(cpu.x, 0x05);
 
         // Check that the memory space has the expected value.
@@ -1325,6 +1332,29 @@ mod test {
     }
     
     // -------- STY --------
+
+    #[test]
+    fn test_sty_zeropage_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into Y register.
+        // 2. Store the value of the Y register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa0, 0x05, 0x84, 0x04, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x0004], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
     // -------- LDA --------
 

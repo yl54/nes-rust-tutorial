@@ -275,6 +275,8 @@ impl CPU {
 
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
+
+			// TODO: Organize these alphabetically.
 			match code_info.code {
 				// Handle ops code LDA.
 				// lda absolute
@@ -331,6 +333,15 @@ impl CPU {
 				// Handle ops code SED (0xF8)
 				0xF8 => self.sed(),
 
+				// Handle ops code STA
+				0x85 | 0x8D | 0x95 | 0x9D | 0x99 => self.sta(&code_info.mode),
+
+				// Handle ops code STX
+				0x86 | 0x96 | 0x8E => self.stx(&code_info.mode),
+				
+				// Handle ops code STY
+				0x84 | 0x94 | 0x8C => self.sty(&code_info.mode),
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -357,6 +368,7 @@ impl CPU {
 	}
 
 	// -------- Handle Opscodes --------
+	// TODO: organize these alphabetically
 
 	// lda handles ops code LDA.
 	// LDA is Load Accumulator.
@@ -514,6 +526,27 @@ impl CPU {
 	// sec sets the decimal bit. It sets it to 1.
 	fn sed(&mut self) {
 		self.p = self.p | 0b0000_1000;
+	}
+
+	// sta handles the ops code STA.
+	// sta stores the A register value into memory.
+	fn sta(&mut self, mode: &AddressingMode) {
+		let addr = self.get_operand_address(mode);
+		self.mem_write(addr, self.a);
+	}
+
+	// stx handles the ops code STX.
+	// stx stores the X register value into memory.
+	fn stx(&mut self, mode: &AddressingMode) {
+		let addr = self.get_operand_address(mode);
+		self.mem_write(addr, self.x);
+	}
+	
+	// sty handles the ops code STY.
+	// sty stores the Y register value into memory.
+	fn sty(&mut self, mode: &AddressingMode) {
+		let addr = self.get_operand_address(mode);
+		self.mem_write(addr, self.y);
 	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -1105,6 +1138,270 @@ mod test {
         assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
     }
 
+    // -------- STA --------
+
+    #[test]
+    fn test_sta_zeropage_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Store the value of the A register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0x85, 0x04, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x0004], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sta_absolute_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Store the value of the A register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0x8d, 0x04, 0xea, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0xea04], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sta_zeropagex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Load a positive value into X register.
+        // 3. Store the value of the A register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0xa2, 0x07, 0x95, 0x04, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x000b], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sta_absolutex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Load a positive value into X register.
+        // 3. Store the value of the A register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0xa2, 0x07, 0x9d, 0x04, 0xea, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0xea0b], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sta_absolutey_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Load a positive value into Y register.
+        // 3. Store the value of the A register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa9, 0x05, 0xa0, 0x07, 0x99, 0x04, 0xdf, 0x00]);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0xdf0b], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+    
+    // -------- STX --------
+
+    #[test]
+    fn test_stx_zeropage_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into X register.
+        // 2. Store the value of the X register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa2, 0x05, 0x86, 0x04, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x0004], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+	#[test]
+    fn test_stx_zeropagey_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into X register.
+        // 2. Load a positive value into Y register.
+        // 3. Store the value of the X register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa2, 0x05, 0xa0, 0x07, 0x96, 0x04, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x000b], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_stx_absolute_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into X register.
+        // 2. Store the value of the X register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa2, 0x05, 0x8e, 0x04, 0x4a, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x4a04], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+    
+    // -------- STY --------
+
+    #[test]
+    fn test_sty_zeropage_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into Y register.
+        // 2. Store the value of the Y register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa0, 0x05, 0x84, 0x04, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x0004], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sty_zeropagex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into Y register.
+        // 2. Load a positive value into X register.
+        // 3. Store the value of the Y register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa0, 0x05, 0xa2, 0x6, 0x94, 0x04, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x000a], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sty_absolute_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into Y register.
+        // 2. Store the value of the Y register onto memory.
+        // 3. Break.
+        cpu.load_and_run(vec![0xa0, 0x05, 0x8c, 0x04, 0x4a, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x4a04], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
     // -------- LDA --------
 
     // -------- Immediate --------
@@ -1172,6 +1469,7 @@ mod test {
 
     // TODO: Add a program in the future that loads stuff into RAM formally, not with hack.
     // Q: How do I load stuff into RAM?
+    // TODO: Replace the hack to store into memory with STA, STX, and STY
 
     #[test]
     fn test_lda_zeropage_happy_path() {

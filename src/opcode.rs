@@ -76,6 +76,23 @@ lazy_static! {
 		OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0xe8, "INX", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0xc8, "INY", 1, 2, AddressingMode::NoneAddressing),
+
+		// STA
+		OpCode::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0x95, "STA", 2, 4, AddressingMode::ZeroPageX),
+		OpCode::new(0x8d, "STA", 3, 4, AddressingMode::Absolute),
+		OpCode::new(0x9d, "STA", 3, 5, AddressingMode::AbsoluteX),
+		OpCode::new(0x99, "STA", 3, 5, AddressingMode::AbsoluteY),
+
+		// STX
+		OpCode::new(0x86, "STX", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0x96, "STX", 2, 4, AddressingMode::ZeroPageY),
+		OpCode::new(0x8e, "STX", 3, 4, AddressingMode::Absolute),
+
+		// STY
+		OpCode::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPageX),
+		OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
 	];
 
 	// function to create hash table from code to OpCode

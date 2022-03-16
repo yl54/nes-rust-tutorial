@@ -92,6 +92,7 @@ lazy_static! {
 		// STY
 		OpCode::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
 		OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPageX),
+		OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
 	];
 
 	// function to create hash table from code to OpCode

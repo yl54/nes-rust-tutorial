@@ -340,7 +340,7 @@ impl CPU {
 				0x86 | 0x96 | 0x8E => self.stx(&code_info.mode),
 				
 				// Handle ops code STY
-				0x84 => self.sty(&code_info.mode),
+				0x84 | 0x94 => self.sty(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -1349,6 +1349,30 @@ mod test {
 
         // Check that the memory space has the expected value.
         assert_eq!(cpu.mem[0x0004], 0x05);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_sty_zeropagex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into Y register.
+        // 2. Load a positive value into X register.
+        // 3. Store the value of the Y register onto memory.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa0, 0x05, 0xa2, 0x6, 0x94, 0x04, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x05);
+
+        // Check that the memory space has the expected value.
+        assert_eq!(cpu.mem[0x000a], 0x05);
 
         // Check the processor status is expected:
         // - Check the Zero Flag is not set.

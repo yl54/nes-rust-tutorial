@@ -280,7 +280,7 @@ impl CPU {
 			match code_info.code {
 				// Handle ops code LDA.
 				// add other lda codes
-				0xA9 | 0xA5 | 0xAD => {
+				0xA9 | 0xA5 | 0xAD | 0xB5 => {
 					self.lda(&code_info.mode);
 				}
 
@@ -1539,7 +1539,32 @@ mod test {
 
     // -------- Zero Page X --------
 
-    // TODO: Add a formal program to load up X
+    #[test]
+    fn test_lda_zeropagex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into X register.
+        // 2. Load a positive value into memory from the X register.
+        // 3. Load a positive value into A register.
+        // 4. Break.
+        cpu.load_and_run(vec![0xa2, 0x04, 0x86, 0x25, 0xb5, 0x21, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x04);
+
+        // Check the memory address has the expected value.
+        assert_eq!(cpu.mem[0x0025], 0x04);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x04);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
     // zero page y
 
@@ -1603,7 +1628,7 @@ mod test {
     }
 
     // add other lda tests
-    
+
     // absolute x
 
     // absolute y

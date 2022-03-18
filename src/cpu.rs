@@ -279,7 +279,7 @@ impl CPU {
 			// TODO: Organize these alphabetically.
 			match code_info.code {
 				// Handle ops code LDA.
-				// lda absolute
+				// add other lda codes
 				0xA9 | 0xA5 | 0xAD => {
 					self.lda(&code_info.mode);
 				}
@@ -1602,7 +1602,8 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-
+    // add other lda tests
+    
     // absolute x
 
     // absolute y

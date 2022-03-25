@@ -1566,6 +1566,68 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
     }
 
+    #[test]
+    fn test_lda_zeropagex_negative() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a negative value into Y register.
+        // 2. Load a negative value into memory from the Y register.
+        // 3. Load a positive value into the X register.
+        // 4. Load a negative value into A register.
+        // 5. Break.
+        cpu.load_and_run(vec![0xa0, 0xf4, 0x84, 0x25, 0xa2, 0x04, 0xb5, 0x21, 0x00]);
+
+		// Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0xf4);
+        
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x04);
+
+        // Check the memory address has the expected value.
+        assert_eq!(cpu.mem[0x0025], 0xf4);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf4);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_lda_zeropagex_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a zero value into Y register.
+        // 2. Load a zero value into memory from the Y register.
+        // 3. Load a positive value into the X register.
+        // 4. Load a zero value into A register.
+        // 5. Break.
+        cpu.load_and_run(vec![0xa0, 0x00, 0x84, 0x25, 0xa2, 0x04, 0xb5, 0x21, 0x00]);
+
+		// Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x00);
+        
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x04);
+
+        // Check the memory address has the expected value.
+        assert_eq!(cpu.mem[0x0025], 0x00);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
+
     // zero page y
 
     // -------- Absolute --------

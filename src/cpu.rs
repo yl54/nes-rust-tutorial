@@ -280,7 +280,7 @@ impl CPU {
 			match code_info.code {
 				// Handle ops code LDA.
 				// add other lda codes
-				0xA9 | 0xA5 | 0xAD | 0xB5 | 0xBD => {
+				0xA9 | 0xA5 | 0xAD | 0xB5 | 0xBD | 0xB9 => {
 					self.lda(&code_info.mode);
 				}
 
@@ -1710,6 +1710,85 @@ mod test {
     }
 
     // absolute y
+    // -------- Absolute Y --------
+
+    #[test]
+    fn test_lda_absolutey_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into A register.
+        // 2. Load a positive value from the A register onto memory.
+        // 3. Load a zero value into the A register to reset.
+        // 4. Load a positive value into Y register.
+        // 5. Load a positive value into A register, using the address where it is stored.
+        // 6. Break.
+        cpu.load_and_run(vec![0xa9, 0x04, 0x8d, 0xab, 0xa1, 0xa9, 0x00, 0xa0, 0x08, 0xb9, 0xa3, 0xa1, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x08);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x04);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_lda_absolutey_negative() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a negative value into A register.
+        // 2. Load a negative value from the A register onto memory.
+        // 3. Load a zero value into the A register to reset.
+        // 4. Load a positive value into Y register.
+        // 5. Load a positive value into A register, using the address where it is stored.
+        // 6. Break.
+        cpu.load_and_run(vec![0xa9, 0xf4, 0x8d, 0xab, 0xa1, 0xa9, 0x00, 0xa0, 0x08, 0xb9, 0xa3, 0xa1, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x08);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf4);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_lda_absolutey_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a zero value into A register.
+        // 2. Load a zero value from the A register onto memory.
+        // 3. Load a non-zero value into the A register to reset.
+        // 4. Load a positive value into Y register.
+        // 5. Load a positive value into A register, using the address where it is stored.
+        // 6. Break.
+        cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0xab, 0xa1, 0xa9, 0x01, 0xa0, 0x08, 0xb9, 0xa3, 0xa1, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x08);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
 
     // indirect x
 

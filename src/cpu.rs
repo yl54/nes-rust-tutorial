@@ -1463,8 +1463,6 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // TODO: Add the lda test sets here
-
     // -------- Zero Page --------
 
     // TODO: Add a program in the future that loads stuff into RAM formally, not with hack.
@@ -1628,8 +1626,6 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // zero page y
-
     // -------- Absolute --------
 
     #[test]
@@ -1688,8 +1684,6 @@ mod test {
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
-
-    // add other lda tests
 
     // -------- Absolute X --------
 
@@ -1771,7 +1765,6 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // absolute y
     // -------- Absolute Y --------
 
     #[test]
@@ -1852,7 +1845,6 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // indirect x
     // -------- Indirect X --------
 
     #[test]
@@ -1972,10 +1964,7 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // indirect y
     // -------- Indirect Y --------
-
-    // 
 
     #[test]
     fn test_lda_indirecty_happy_path() {
@@ -2055,7 +2044,7 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
     }
 
-        #[test]
+    #[test]
     fn test_lda_indirecty_zero() {
     	// Create a CPU.
         let mut cpu = CPU::new();

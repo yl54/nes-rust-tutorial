@@ -1889,7 +1889,87 @@ mod test {
         assert_eq!(cpu.a, 0x54);
 
         // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
 
+    #[test]
+    fn test_lda_indirectx_negative() {
+    	// Create a CPU.
+        let mut cpu = CPU::new();
+
+    	// value is on 0x2163
+    	// first address is 0x0043 and has 0x63
+    	// second address is 0x0044 and 0x21
+    	// x is 
+    	// something + 31 = 0x6300
+    	// 0075
+
+    	// Load and run a short program
+    	// 1. Load a negative value into the Y register. This will be the final result.
+    	// 2. Store the value from the Y register onto memory.
+    	// 3. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 4. Store the value from the Y register onto memory on an adjacent space.
+    	// 3. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 4. Store the value from the Y register onto memory on an adjacent space.
+    	// 5. Load a positive value into the X register.
+    	// 6. Load a positive value into the A register, from the value on memory.
+    	// 7. Break
+    	cpu.load_and_run(vec![0xa0, 0xf4, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa2, 0x31, 0xa1, 0x12, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x21);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x31);
+        
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xf4);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_lda_indirectx_zero() {
+    	// Create a CPU.
+        let mut cpu = CPU::new();
+
+    	// value is on 0x2163
+    	// first address is 0x0043 and has 0x63
+    	// second address is 0x0044 and 0x21
+    	// x is 
+    	// something + 31 = 0x6300
+    	// 0075
+
+    	// Load and run a short program
+    	// 1. Load a zero value into the Y register. This will be the final result.
+    	// 2. Store the value from the Y register onto memory.
+    	// 3. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 4. Store the value from the Y register onto memory on an adjacent space.
+    	// 3. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 4. Store the value from the Y register onto memory on an adjacent space.
+    	// 5. Load a positive value into the X register.
+    	// 6. Load a positive value into the A register, from the value on memory.
+    	// 7. Break
+    	cpu.load_and_run(vec![0xa0, 0x00, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa2, 0x31, 0xa1, 0x12, 0x00]);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x21);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x31);
+        
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
     // indirect y

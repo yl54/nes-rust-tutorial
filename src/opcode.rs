@@ -69,6 +69,12 @@ lazy_static! {
 
 		OpCode::new(0xa2, "LDX", 2, 2, AddressingMode::Immediate),
 
+		// Add other LDX ops codes
+		// zero page
+		// zero page y
+		// absolute
+		// absolute y
+
 		OpCode::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),
 
 		// --------- Register Flags -----------

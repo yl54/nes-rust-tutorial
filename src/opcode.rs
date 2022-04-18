@@ -70,12 +70,10 @@ lazy_static! {
 		OpCode::new(0xa2, "LDX", 2, 2, AddressingMode::Immediate),
 
 		// Add other LDX ops codes
-		// zero page
 		OpCode::new(0xa6, "LDX", 2, 3, AddressingMode::ZeroPage),
 		OpCode::new(0xb6, "LDX", 2, 4, AddressingMode::ZeroPageY),
+		OpCode::new(0xae, "LDX", 3, 4, AddressingMode::Absolute),
 
-		// zero page y
-		// absolute
 		// absolute y
 
 		OpCode::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),

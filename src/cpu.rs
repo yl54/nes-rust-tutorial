@@ -291,6 +291,7 @@ impl CPU {
 				}
 
 				// Handle ops code LDY.
+				// add other ldy codes.
 				0xA0 => {
 					self.ldy(&code_info.mode);
 				}
@@ -2519,6 +2520,12 @@ mod test {
         // - Check the Negative Flag is not set.
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
+
+    // Add other ldy tests
+    // -------- Zero Page --------
+    // -------- Zero Page X --------
+    // -------- Absolute --------
+    // -------- Absolute X --------
 
     // -------- TAX --------
 

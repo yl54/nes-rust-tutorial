@@ -75,6 +75,8 @@ lazy_static! {
 
 		OpCode::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),
 
+		// add other ldy codes
+
 		// --------- Register Flags -----------
 
 		OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),

@@ -292,7 +292,7 @@ impl CPU {
 
 				// Handle ops code LDY.
 				// add other ldy codes.
-				0xA0 | 0xA4 => {
+				0xA0 | 0xA4 | 0xB4 => {
 					self.ldy(&code_info.mode);
 				}
 
@@ -2597,6 +2597,91 @@ mod test {
     }
 
     // -------- Zero Page X --------
+
+    #[test]
+    fn test_ldy_zeropagex_happy_path() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into the X register.
+        // 2. Load a positive value into A register.
+        // 3. Store the positive value onto memory in the first 256 bytes.
+        // 4. Load a positive value into the Y register.
+        // 5. Break.
+        cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0x54, 0x85, 0x23, 0xb4, 0x22, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x01);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x54);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x54);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0000);
+    }
+
+    #[test]
+    fn test_ldy_zeropagex_negative() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into the X register.
+        // 2. Load a negative value into A register.
+        // 3. Store the negative value onto memory in the first 256 bytes.
+        // 4. Load a negative value into the Y register.
+        // 5. Break.
+        cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0xa4, 0x85, 0x23, 0xb4, 0x22, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x01);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0xa4);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0xa4);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is not set.
+        // - Check the Negative Flag is set.
+        assert!(cpu.p & 0b1000_0010 == 0b1000_0000);
+    }
+
+    #[test]
+    fn test_ldy_zeropagex_zero() {
+        // Create a CPU.
+        let mut cpu = CPU::new();
+
+        // Load and run a short program.
+        // 1. Load a positive value into the X register.
+        // 2. Load a zero value into A register.
+        // 3. Store the zero value onto memory in the first 256 bytes.
+        // 4. Load a zero value into the Y register.
+        // 5. Break.
+        cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0x00, 0x85, 0x23, 0xb4, 0x22, 0x00]);
+
+        // Check the X register has the expected value.
+        assert_eq!(cpu.x, 0x01);
+
+        // Check the A register has the expected value.
+        assert_eq!(cpu.a, 0x00);
+
+        // Check the Y register has the expected value.
+        assert_eq!(cpu.y, 0x00);
+
+        // Check the processor status is expected:
+        // - Check the Zero Flag is set.
+        // - Check the Negative Flag is not set.
+        assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
+    }
+
     // -------- Absolute --------
     // -------- Absolute X --------
 

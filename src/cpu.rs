@@ -4,6 +4,7 @@ use crate::opcode::OP_CODE_MAP;
 // Q: Is it worth having a handler object per ops code?
 // A: Probably not. The logic is too interwined with the CPU.
 
+// TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
 pub struct CPU {
 	// -------- Registers --------
@@ -34,7 +35,7 @@ pub struct CPU {
 	 * 8 bit register represents 7 status flags.
 	 * Each one is toggled depending on operation.
 	 * 
-	 * 7 N Negative- It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
+	 * 7 N Negative - It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
 	 * 6 V Overflow
 	 * 5 - (Expansion)
 	 * 4 B Break Command

@@ -276,7 +276,7 @@ impl CPU {
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
 
-			// TODO: Organize these alphabetically.
+			// TODO: Organize these alphabetically and in categories.
 			match code_info.code {
 				// Handle ops code LDA.
 				0xA9 | 0xA5 | 0xAD | 0xB5 | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
@@ -345,6 +345,13 @@ impl CPU {
 				0xEA => {
 					// do nothing
 				},
+
+				// Handle ops code TXS (0x9A)
+				// Handle ops code TSX (0xBA)
+				// Handle ops code PHA (0x48)
+				// Handle ops code PLA (0x68)
+				// Handle ops code PHP (0x08)
+				// Handle ops code PLP (0x28)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -547,6 +554,13 @@ impl CPU {
 		let addr = self.get_operand_address(mode);
 		self.mem_write(addr, self.y);
 	}
+
+	// txs
+	// tsx
+	// pha
+	// pla
+	// php
+	// plp
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -3525,4 +3539,11 @@ mod test {
     	// - All other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b0000_1000);   	
     }
+
+    // txs
+	// tsx
+	// pha
+	// pla
+	// php
+	// plp
 }

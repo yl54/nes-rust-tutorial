@@ -74,8 +74,6 @@ lazy_static! {
 		OpCode::new(0xbe, "LDX", 3, 4, AddressingMode::AbsoluteY),
 
 		OpCode::new(0xa0, "LDY", 2, 2, AddressingMode::Immediate),
-
-		// add other ldy codes
 		OpCode::new(0xa4, "LDY", 2, 3, AddressingMode::ZeroPage),
 		OpCode::new(0xb4, "LDY", 2, 4, AddressingMode::ZeroPageX),
 		OpCode::new(0xac, "LDY", 3, 4, AddressingMode::Absolute),

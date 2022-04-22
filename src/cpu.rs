@@ -279,19 +279,16 @@ impl CPU {
 			// TODO: Organize these alphabetically.
 			match code_info.code {
 				// Handle ops code LDA.
-				// add other lda codes
 				0xA9 | 0xA5 | 0xAD | 0xB5 | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
 					self.lda(&code_info.mode);
 				}
 
 				// Handle ops code LDX.
-				// Add other ldx ops codes
 				0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => {
 					self.ldx(&code_info.mode);
 				}
 
 				// Handle ops code LDY.
-				// add other ldy codes.
 				0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => {
 					self.ldy(&code_info.mode);
 				}
@@ -2521,7 +2518,6 @@ mod test {
         assert!(cpu.p & 0b1000_0010 == 0b0000_0010);
     }
 
-    // Add other ldy tests
     // -------- Zero Page --------
 
     #[test]

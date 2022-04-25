@@ -4,6 +4,26 @@ use crate::opcode::OP_CODE_MAP;
 // Q: Is it worth having a handler object per ops code?
 // A: Probably not. The logic is too interwined with the CPU.
 
+// Stack bottom
+// 0x0100 = 0000 0001 0000 0000 = 256
+const STACK_BOTTOM: u16 = 0x0100;
+
+// Stack top
+// 0x01ff = 0000 0001 1111 1111 = 511
+// q: in the nes rust tutorial code, why is the stack reset set to 0xFD?
+// a: read about it here: https://forums.nesdev.org/viewtopic.php?t=19858
+// https://www.nesdev.org/wiki/CPU_power_up_state
+// on startup, the stack pointer will init to 0. when cpu follows reset instructions, it treats it like an interrupt.
+// it tries to push pc and p onto the stack
+// special logic makes it perform reads rather than writes
+// the stack pointer is decremented by 3 due to this access
+
+// STACK_TOP is the true top of the stack
+const STACK_TOP: u16 = 0x01FF;
+
+// STACK_RESET is the actual reset location for the stack pointer
+const STACK_TOP_RESET: u8 = 0xFD;
+
 // TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
 pub struct CPU {
@@ -84,6 +104,11 @@ impl CPU {
 
 		// Set Processor Status register to 0.
 		self.p = 0;
+
+		// Set Stack Pointer to 0xfd.
+		// 0x01ff, 0x00ff, 0x00fe are handled as special cases, and the stack pointer is decremented
+		// for more information, please look above for the stack comment
+		self.s = STACK_TOP_RESET;
 
 		// Set PC to the value stored at 0xFFFC.
 		self.pc = self.mem_read_u16(0xFFFC);
@@ -563,6 +588,12 @@ impl CPU {
 	// php
 	// plp
 
+	// function to push onto the stack
+		// need to check that we are not overflowing
+
+	// function to pop off the stack
+		// need to check that we are not underflowing
+
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
@@ -615,6 +646,7 @@ mod test {
     	assert_eq!(cpu.x, 0);
     	assert_eq!(cpu.y, 0);
     	assert_eq!(cpu.p, 0);
+    	assert_eq!(cpu.s, 0xfd);
     }
 
     #[test]
@@ -633,6 +665,7 @@ mod test {
     	assert_eq!(cpu.x, 0);
     	assert_eq!(cpu.y, 0);
     	assert_eq!(cpu.p, 0);
+    	assert_eq!(cpu.s, 0xfd);
     }
 
     #[test]
@@ -1144,7 +1177,7 @@ mod test {
         assert_eq!(cpu.a, 0x00);
         assert_eq!(cpu.x, 0x00);
         assert_eq!(cpu.y, 0x00);
-        assert_eq!(cpu.s, 0x00);
+        assert_eq!(cpu.s, 0xfd);
         assert_eq!(cpu.pc, 0x8002);
 
         // Check the processor status is expected:

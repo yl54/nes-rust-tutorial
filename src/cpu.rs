@@ -18,11 +18,12 @@ const STACK_BOTTOM: u16 = 0x0100;
 // special logic makes it perform reads rather than writes
 // the stack pointer is decremented by 3 due to this access
 
-// STACK_TOP is the true top of the stack
+// STACK_TOP is the top of the stack
 const STACK_TOP: u16 = 0x01FF;
 
-// STACK_RESET is the actual reset location for the stack pointer
-const STACK_TOP_RESET: u8 = 0xFD;
+// STACK_POINTER_RESET is the actual reset location for the stack pointer
+// It is 0xFF - 2 
+const STACK_POINTER_RESET: u8 = 0xFD;
 
 // TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
@@ -108,7 +109,7 @@ impl CPU {
 		// Set Stack Pointer to 0xfd.
 		// 0x01ff, 0x00ff, 0x00fe are handled as special cases, and the stack pointer is decremented
 		// for more information, please look above for the stack comment
-		self.s = STACK_TOP_RESET;
+		self.s = STACK_POINTER_RESET;
 
 		// Set PC to the value stored at 0xFFFC.
 		self.pc = self.mem_read_u16(0xFFFC);
@@ -589,10 +590,35 @@ impl CPU {
 	// plp
 
 	// function to push onto the stack
+	// take in a u8
 		// need to check that we are not overflowing
 
+		// set the current stack pointer location + stack bottom to the value
+
+		// decrement the stack pointer
+
 	// function to pop off the stack
+	// return a u8
+
 		// need to check that we are not underflowing
+
+		// increment the stack pointer
+
+		// read the value that is on the stack pointer location
+
+		// return the value
+
+	// function to pop off a u16 off the stack
+	// return a u16
+		// need to check that we are not underflowing
+
+		// increment the stack pointer by 2
+
+		// read the value that is on the stack pointer location
+
+		// read the value that is on the stack pointer - 1 location
+
+		// return the number
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {

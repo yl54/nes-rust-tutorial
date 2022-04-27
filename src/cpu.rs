@@ -162,6 +162,71 @@ impl CPU {
 		self.mem_write(addr + 1, high);
 	}
 
+	// function to push onto the stack
+	// take in a u8
+	fn stack_push(&mut self, value: u8) {
+		// need to check that we are not overflowing
+
+		// set the current (stack pointer location + stack bottom) location to the value
+		let addr: u16 = (self.s as u16) + (STACK_BOTTOM as u16);
+		self.mem_write(addr, value);
+
+		// decrement the stack pointer
+		self.s = self.s.wrapping_sub(1);
+	}
+
+	// function to push a u16 onto the stack
+	// take in a u16
+	fn stack_push_u16(&mut self, value: u16) {
+		// need to check that we are not overflowing
+
+		// get the high value of the u16
+		// use a right shift to shift the top 8 bits to the bottom 
+		let high: u8 = (value >> 8) as u8;
+
+		// get the low value of the u16
+		// use a and with 0xff to get the first 8 bits and set the high 8 bits to 0
+		let low: u8 = (value & 0xff) as u8;
+
+		// push the high value onto the stack
+		self.stack_push(high);
+		
+		// push the low value onto the stack
+		self.stack_push(low);
+	}
+
+	// function to pop off the stack
+	// return a u8
+	fn stack_pop(&mut self) -> u8 {
+
+		// need to check that we are not underflowing
+
+		// increment the stack pointer
+		self.s = self.s.wrapping_add(1);
+
+		// read the value that is on the stack pointer location
+		// return the value
+		return self.mem_read(self.s as u16);
+	}
+
+	// function to pop off a u16 off the stack
+	// return a u16
+	fn stack_pop_u16(&mut self) -> u8 {
+
+		// need to check that we are not underflowing
+
+		// pop the value, this is the low value
+		let low: u8 = self.stack_pop();
+
+		// pop the value, this is the high value
+		let high: u8 = self.stack_pop();
+
+		// return the number
+		// left shift high bits to higher 8 bits
+		// low will just stay low
+		return high << 8 | low;
+	}
+
 	// get_operand_address determines how an address should be read.
 	// It returns an address for the next step to read off of.
 	// It is determined based off of the Addressing mode.
@@ -588,37 +653,6 @@ impl CPU {
 	// pla
 	// php
 	// plp
-
-	// function to push onto the stack
-	// take in a u8
-		// need to check that we are not overflowing
-
-		// set the current stack pointer location + stack bottom to the value
-
-		// decrement the stack pointer
-
-	// function to pop off the stack
-	// return a u8
-
-		// need to check that we are not underflowing
-
-		// increment the stack pointer
-
-		// read the value that is on the stack pointer location
-
-		// return the value
-
-	// function to pop off a u16 off the stack
-	// return a u16
-		// need to check that we are not underflowing
-
-		// increment the stack pointer by 2
-
-		// read the value that is on the stack pointer location
-
-		// read the value that is on the stack pointer - 1 location
-
-		// return the number
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -1181,6 +1215,81 @@ mod test {
 	fn test_get_operand_address_none_happypath() {
 		let mut cpu = CPU::new();
 		cpu.get_operand_address(&AddressingMode::NoneAddressing);
+	}
+
+	// ---------- Stack Operation Tests -----------
+
+	// stack push
+	#[test]
+	fn test_stack_push_happypath() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the CPU
+		cpu.reset();
+
+		// set a u8 number
+		let value: u8 = 0x3e;
+
+		// push the value onto the stack
+		cpu.stack_push(value);
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfc);
+
+		// check the value on memory
+		assert_eq!(cpu.mem[0x01fd], value);
+	}
+	
+	// stack push u16
+	fn test_stack_push_u16_happypath() {
+		// create a cpu
+
+		// reset the CPU
+
+		// set a u16 number
+
+		// push the value onto the stack
+
+		// check the stack pointer value
+
+		// check the value on the low value
+
+		// check the value on the high value
+	}
+	
+	// stack pop
+	fn test_stack_pop_happypath() {
+		// create a cpu
+
+		// reset the cpu
+
+		// set a u8 number
+
+		// push a value onto the stack
+
+		// pop the value off of the stack
+
+		// check the stack pointer value
+
+		// check the value returned
+	}
+
+	// stack pop u16
+	fn test_stack_pop_u16_happypath() {
+		// create a cpu
+
+		// reset the cpu
+
+		// set two u8 numbers
+
+		// push 2 values onto the stack
+
+		// pop the u16 value off of the stack
+
+		// check the stack pointer value
+
+		// check the value returned
 	}
 
     // ----------------------------------

@@ -180,6 +180,7 @@ impl CPU {
 	fn stack_push_u16(&mut self, value: u16) {
 		// need to check that we are not overflowing
 
+
 		// get the high value of the u16
 		// use a right shift to shift the top 8 bits to the bottom 
 		let high: u8 = (value >> 8) as u8;
@@ -204,14 +205,16 @@ impl CPU {
 		// increment the stack pointer
 		self.s = self.s.wrapping_add(1);
 
-		// read the value that is on the stack pointer location
+		// Get the address to read off of
+		let addr: u16 = self.stack_current_address();
+
 		// return the value
-		return self.mem_read(self.s as u16);
+		return self.mem_read(addr);
 	}
 
 	// function to pop off a u16 off the stack
 	// return a u16
-	fn stack_pop_u16(&mut self) -> u8 {
+	fn stack_pop_u16(&mut self) -> u16 {
 
 		// need to check that we are not underflowing
 
@@ -224,7 +227,11 @@ impl CPU {
 		// return the number
 		// left shift high bits to higher 8 bits
 		// low will just stay low
-		return high << 8 | low;
+		return (high as u16) << 8 | (low as u16);
+	}
+
+	fn stack_current_address(&self) -> u16 {
+		return STACK_BOTTOM.wrapping_add(self.s as u16);
 	}
 
 	// get_operand_address determines how an address should be read.
@@ -1242,54 +1249,102 @@ mod test {
 	}
 	
 	// stack push u16
+	#[test]
 	fn test_stack_push_u16_happypath() {
 		// create a cpu
+		let mut cpu = CPU::new();
 
 		// reset the CPU
+		cpu.reset();
 
 		// set a u16 number
+		let value: u16 = 0x4387;
 
 		// push the value onto the stack
+		cpu.stack_push_u16(value);
 
 		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfb);
 
 		// check the value on the low value
+		assert_eq!(cpu.mem[0x01fc], 0x87);
 
 		// check the value on the high value
+		assert_eq!(cpu.mem[0x01fd], 0x43);
 	}
 	
 	// stack pop
+
+	#[test]
 	fn test_stack_pop_happypath() {
 		// create a cpu
+		let mut cpu = CPU::new();
 
 		// reset the cpu
+		cpu.reset();
 
 		// set a u8 number
+		let value: u8 = 0x34;
 
 		// push a value onto the stack
+		cpu.stack_push(value);
+
+		assert_eq!(cpu.s, 0xfc);
+		assert_eq!(cpu.mem[0x01fd], value);
 
 		// pop the value off of the stack
+		let actual: u8 = cpu.stack_pop();
 
 		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
 
 		// check the value returned
+		assert_eq!(actual, value);
 	}
 
 	// stack pop u16
 	fn test_stack_pop_u16_happypath() {
 		// create a cpu
+		let mut cpu = CPU::new();
 
 		// reset the cpu
+		cpu.reset();
+
+		// ---- push 2 u8 values onto the stack ----
 
 		// set two u8 numbers
+		let lo: u8 = 0x43;
+		let high: u8 = 0x67;
 
 		// push 2 values onto the stack
+		cpu.stack_push(high);
+		cpu.stack_push(lo);
 
 		// pop the u16 value off of the stack
+		let actual: u16 = cpu.stack_pop_u16();
 
 		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
 
 		// check the value returned
+		assert_eq!(actual, 0x6743);
+
+		// ---- push 1 u16 value onto the stack ----
+
+		// set a single u16 number
+		let value: u16 = 0x1290;
+
+		// push 2 values onto the stack
+		cpu.stack_push_u16(value);
+
+		// pop the u16 value off of the stack
+		let actual: u16 = cpu.stack_pop_u16();
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
+
+		// check the value returned
+		assert_eq!(actual, value);
 	}
 
     // ----------------------------------

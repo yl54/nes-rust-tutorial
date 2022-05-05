@@ -6,6 +6,7 @@ use crate::opcode::OP_CODE_MAP;
 
 // Stack bottom
 // 0x0100 = 0000 0001 0000 0000 = 256
+// Use this for overflow checks.
 const STACK_BOTTOM: u16 = 0x0100;
 
 // Stack top
@@ -24,6 +25,10 @@ const STACK_TOP: u16 = 0x01FF;
 // STACK_POINTER_RESET is the actual reset location for the stack pointer
 // It is 0xFF - 2 
 const STACK_POINTER_RESET: u8 = 0xFD;
+
+// STACK_REAL_TOP is the effective top of the stack.
+// Use this for underflow checks.
+const STACK_REAL_TOP: u16 = 0x01FD;
 
 // TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
@@ -165,10 +170,14 @@ impl CPU {
 	// function to push onto the stack
 	// take in a u8
 	fn stack_push(&mut self, value: u8) {
-		// need to check that we are not overflowing
-
 		// set the current (stack pointer location + stack bottom) location to the value
-		let addr: u16 = (self.s as u16) + (STACK_BOTTOM as u16);
+		let addr: u16 = self.stack_current_address();
+
+		// Check that the stack is not overflowing
+		if addr < STACK_BOTTOM {
+			panic!("stack overflow");
+		}
+
 		self.mem_write(addr, value);
 
 		// decrement the stack pointer
@@ -179,7 +188,7 @@ impl CPU {
 	// take in a u16
 	fn stack_push_u16(&mut self, value: u16) {
 		// need to check that we are not overflowing
-
+		// each stack push action will check this
 
 		// get the high value of the u16
 		// use a right shift to shift the top 8 bits to the bottom 
@@ -199,14 +208,16 @@ impl CPU {
 	// function to pop off the stack
 	// return a u8
 	fn stack_pop(&mut self) -> u8 {
-
-		// need to check that we are not underflowing
-
 		// increment the stack pointer
 		self.s = self.s.wrapping_add(1);
 
 		// Get the address to read off of
 		let addr: u16 = self.stack_current_address();
+
+		// Check that the stack is not underflowing
+		if addr > STACK_REAL_TOP {
+			panic!("stack underflow");
+		}
 
 		// return the value
 		return self.mem_read(addr);
@@ -215,8 +226,8 @@ impl CPU {
 	// function to pop off a u16 off the stack
 	// return a u16
 	fn stack_pop_u16(&mut self) -> u16 {
-
 		// need to check that we are not underflowing
+		// each stack pop action will check this
 
 		// pop the value, this is the low value
 		let low: u8 = self.stack_pop();
@@ -230,6 +241,8 @@ impl CPU {
 		return (high as u16) << 8 | (low as u16);
 	}
 
+	// stack_current_address will return the current location of the
+	// top of the stack. 
 	fn stack_current_address(&self) -> u16 {
 		return STACK_BOTTOM.wrapping_add(self.s as u16);
 	}
@@ -1346,6 +1359,26 @@ mod test {
 		// check the value returned
 		assert_eq!(actual, value);
 	}
+
+	// stack pop underflow
+
+	// stack pop u16 underflow
+
+	// stack pop overflow
+	// odd, should never happen case
+
+	// stack pop u16 overflow
+	// odd, should never happen case
+
+	// stack push overflow
+
+	// stack push u16 overflow
+
+	// stack push underflow
+	// odd, should never happen case
+
+	// stack push u16 underflow
+	// odd, should never happen case
 
     // ----------------------------------
     // --------- Ops Code Tests ---------

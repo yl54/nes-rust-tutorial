@@ -22,13 +22,13 @@ const STACK_BOTTOM: u16 = 0x0100;
 // STACK_TOP is the top of the stack
 const STACK_TOP: u16 = 0x01FF;
 
-// STACK_POINTER_RESET is the actual reset location for the stack pointer
-// It is 0xFF - 2 
-const STACK_POINTER_RESET: u8 = 0xFD;
-
 // STACK_REAL_TOP is the effective top of the stack.
 // Use this for underflow checks.
 const STACK_REAL_TOP: u16 = 0x01FD;
+
+// STACK_POINTER_RESET is the actual reset location for the stack pointer
+// It is 0xFF - 2 
+const STACK_POINTER_RESET: u8 = 0xFD;
 
 // TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
@@ -170,13 +170,12 @@ impl CPU {
 	// function to push onto the stack
 	// take in a u8
 	fn stack_push(&mut self, value: u8) {
+		// Check that the stack is not overflowing or underflowing.
+		// Underflowing would be a very odd case that should never occur.
+		self.check_stack_overflow(1);
+
 		// set the current (stack pointer location + stack bottom) location to the value
 		let addr: u16 = self.stack_current_address();
-
-		// Check that the stack is not overflowing
-		if addr < STACK_BOTTOM {
-			panic!("stack overflow");
-		}
 
 		self.mem_write(addr, value);
 
@@ -208,16 +207,19 @@ impl CPU {
 	// function to pop off the stack
 	// return a u8
 	fn stack_pop(&mut self) -> u8 {
+		// Check that the stack is not underflowing or overflowing.
+		// Overflowing would be a very odd case that should never occur.
+		// Based off of the implementation, the lowest value that can be fetched
+		// from stack_current_address is 0x0100, which is still a valid stack address.
+		// In an real world implementation where performance/speed counts, we may
+		// not want to check for an overflow. 
+		self.check_stack_underflow(1);
+
 		// increment the stack pointer
 		self.s = self.s.wrapping_add(1);
 
 		// Get the address to read off of
 		let addr: u16 = self.stack_current_address();
-
-		// Check that the stack is not underflowing
-		if addr > STACK_REAL_TOP {
-			panic!("stack underflow");
-		}
 
 		// return the value
 		return self.mem_read(addr);
@@ -245,6 +247,28 @@ impl CPU {
 	// top of the stack. 
 	fn stack_current_address(&self) -> u16 {
 		return STACK_BOTTOM.wrapping_add(self.s as u16);
+	}
+
+	// TODO: Figure out what to do for stack overflow and underflow checks.
+	// Dont use the address value.
+	// Somehow do a check on the s pointer.
+	// https://chubakbidpaa.com/retro/2020/12/15/6502-stack-copy.html
+	// go to the "Overflow and Underflow" section for more info 
+
+	fn check_stack_overflow(&self, required_change: u8) {
+		// If the stack pointer indicates it will become less than 0,
+		// then the stack is overflowing.
+		if self.s < required_change {
+			panic!("stack overflow");
+		}
+	}
+
+	fn check_stack_underflow(&self, required_change: u16) {
+		// If the stack pointer has less space from the top then the required change,
+		// then the stack is underflowing.
+		if (STACK_REAL_TOP - self.stack_current_address() as u16) < required_change {
+			panic!("stack underflow");
+		}
 	}
 
 	// get_operand_address determines how an address should be read.
@@ -748,8 +772,8 @@ mod test {
     	assert_eq!(cpu.s, 0xfd);
     }
 
-    #[test]
-	#[should_panic]
+    #[test]	
+	#[should_panic(expected = "OpCode f1 is not recognized")]
     fn test_load_and_run_unknown_opcode() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
@@ -1231,7 +1255,7 @@ mod test {
 
 	// None Addressing
 	#[test]
-	#[should_panic]
+	#[should_panic(expected = "not supported")]
 	fn test_get_operand_address_none_happypath() {
 		let mut cpu = CPU::new();
 		cpu.get_operand_address(&AddressingMode::NoneAddressing);
@@ -1302,9 +1326,6 @@ mod test {
 		// push a value onto the stack
 		cpu.stack_push(value);
 
-		assert_eq!(cpu.s, 0xfc);
-		assert_eq!(cpu.mem[0x01fd], value);
-
 		// pop the value off of the stack
 		let actual: u8 = cpu.stack_pop();
 
@@ -1316,6 +1337,7 @@ mod test {
 	}
 
 	// stack pop u16
+	#[test]
 	fn test_stack_pop_u16_happypath() {
 		// create a cpu
 		let mut cpu = CPU::new();
@@ -1361,18 +1383,82 @@ mod test {
 	}
 
 	// stack pop underflow
+	#[should_panic(expected = "stack underflow")]
+	#[test]
+	fn test_stack_pop_underflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// pop the value off of the stack
+		// this should trigger the panic immediately
+		let actual: u8 = cpu.stack_pop();
+	}
 
 	// stack pop u16 underflow
+	#[should_panic(expected = "stack underflow")]
+	#[test]
+	fn test_stack_pop_u16_underflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
 
-	// stack pop overflow
-	// odd, should never happen case
+		// reset the cpu
+		cpu.reset();
 
-	// stack pop u16 overflow
-	// odd, should never happen case
+		// pop the value off of the stack
+		// this should trigger the panic immediately
+		let actual: u16 = cpu.stack_pop_u16();
+	}
+
+	// Stack pop overflows
+	// We will not be checking for these scenarios.
+	// The current implementation does not permit this to occur.
 
 	// stack push overflow
+	// the implementation actually takes this to be a stack underflow
+	#[should_panic(expected = "stack overflow")]
+	#[test]
+	fn test_stack_push_overflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// set the stack pointer to the bottom of the stack.
+		cpu.s = 0;
+
+		let value: u8 = 2;
+
+		// push the value off of the stack
+		// this should trigger the panic immediately
+		cpu.stack_push(value);
+		cpu.stack_push(value);
+	}
 
 	// stack push u16 overflow
+	#[should_panic(expected = "stack overflow")]
+	#[test]
+	fn test_stack_push_u16_overflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// set the stack pointer to almost the bottom of the stack
+		// push 2 values should lead to this as an overflow state.
+		cpu.s = 1;
+
+		let value: u8 = 2;
+
+		// push the value off of the stack
+		// this should trigger the panic immediately
+		cpu.stack_push(value);
+		cpu.stack_push(value);
+	}
 
 	// stack push underflow
 	// odd, should never happen case

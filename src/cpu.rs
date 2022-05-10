@@ -4,6 +4,33 @@ use crate::opcode::OP_CODE_MAP;
 // Q: Is it worth having a handler object per ops code?
 // A: Probably not. The logic is too interwined with the CPU.
 
+// Stack bottom
+// 0x0100 = 0000 0001 0000 0000 = 256
+// Use this for overflow checks.
+const STACK_BOTTOM: u16 = 0x0100;
+
+// Stack top
+// 0x01ff = 0000 0001 1111 1111 = 511
+// q: in the nes rust tutorial code, why is the stack reset set to 0xFD?
+// a: read about it here: https://forums.nesdev.org/viewtopic.php?t=19858
+// https://www.nesdev.org/wiki/CPU_power_up_state
+// on startup, the stack pointer will init to 0. when cpu follows reset instructions, it treats it like an interrupt.
+// it tries to push pc and p onto the stack
+// special logic makes it perform reads rather than writes
+// the stack pointer is decremented by 3 due to this access
+
+// STACK_TOP is the top of the stack
+const STACK_TOP: u16 = 0x01FF;
+
+// STACK_REAL_TOP is the effective top of the stack.
+// Use this for underflow checks.
+const STACK_REAL_TOP: u16 = 0x01FD;
+
+// STACK_POINTER_RESET is the actual reset location for the stack pointer
+// It is 0xFF - 2 
+const STACK_POINTER_RESET: u8 = 0xFD;
+
+// TODO: Figure out how to implement the stack
 // CPU emulates a 6502 CPU.
 pub struct CPU {
 	// -------- Registers --------
@@ -34,7 +61,7 @@ pub struct CPU {
 	 * 8 bit register represents 7 status flags.
 	 * Each one is toggled depending on operation.
 	 * 
-	 * 7 N Negative- It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
+	 * 7 N Negative - It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
 	 * 6 V Overflow
 	 * 5 - (Expansion)
 	 * 4 B Break Command
@@ -83,6 +110,11 @@ impl CPU {
 
 		// Set Processor Status register to 0.
 		self.p = 0;
+
+		// Set Stack Pointer to 0xfd.
+		// 0x01ff, 0x00ff, 0x00fe are handled as special cases, and the stack pointer is decremented
+		// for more information, please look above for the stack comment
+		self.s = STACK_POINTER_RESET;
 
 		// Set PC to the value stored at 0xFFFC.
 		self.pc = self.mem_read_u16(0xFFFC);
@@ -133,6 +165,107 @@ impl CPU {
 		let low = (value & 0xff) as u8;
 		self.mem_write(addr, low);
 		self.mem_write(addr + 1, high);
+	}
+
+	// stack_push will push a u8 onto the stack
+	fn stack_push(&mut self, value: u8) {
+		// Check that the stack is not overflowing or underflowing.
+		// Underflowing would be a very odd case that should never occur.
+		self.check_stack_overflow(1);
+
+		// set the current (stack pointer location + stack bottom) location to the value
+		let addr: u16 = self.stack_current_address();
+
+		self.mem_write(addr, value);
+
+		// decrement the stack pointer
+		self.s = self.s.wrapping_sub(1);
+	}
+
+	// stack_push_u16 will push a u16 onto the stack
+	fn stack_push_u16(&mut self, value: u16) {
+		// need to check that we are not overflowing
+		// each stack push action will check this
+
+		// get the high value of the u16
+		// use a right shift to shift the top 8 bits to the bottom 
+		let high: u8 = (value >> 8) as u8;
+
+		// get the low value of the u16
+		// use a and with 0xff to get the first 8 bits and set the high 8 bits to 0
+		let low: u8 = (value & 0xff) as u8;
+
+		// push the high value onto the stack
+		self.stack_push(high);
+		
+		// push the low value onto the stack
+		self.stack_push(low);
+	}
+
+	// stack_pop will pop a u8 off of the stack
+	fn stack_pop(&mut self) -> u8 {
+		// Check that the stack is not underflowing or overflowing.
+		// Overflowing would be a very odd case that should never occur.
+		// Based off of the implementation, the lowest value that can be fetched
+		// from stack_current_address is 0x0100, which is still a valid stack address.
+		// In an real world implementation where performance/speed counts, we may
+		// not want to check for an overflow. 
+		self.check_stack_underflow(1);
+
+		// increment the stack pointer
+		self.s = self.s.wrapping_add(1);
+
+		// Get the address to read off of
+		let addr: u16 = self.stack_current_address();
+
+		// return the value
+		return self.mem_read(addr);
+	}
+
+	// stack_pop_u16 will pop a u16 off of the stack
+	fn stack_pop_u16(&mut self) -> u16 {
+		// need to check that we are not underflowing
+		// each stack pop action will check this
+
+		// pop the value, this is the low value
+		let low: u8 = self.stack_pop();
+
+		// pop the value, this is the high value
+		let high: u8 = self.stack_pop();
+
+		// return the number
+		// left shift high bits to higher 8 bits
+		// low will just stay low
+		return (high as u16) << 8 | (low as u16);
+	}
+
+	// stack_current_address will return the current location of the
+	// top of the stack. 
+	fn stack_current_address(&self) -> u16 {
+		return STACK_BOTTOM.wrapping_add(self.s as u16);
+	}
+
+	// https://chubakbidpaa.com/retro/2020/12/15/6502-stack-copy.html
+	// go to the "Overflow and Underflow" section for more info 
+
+	// check_stack_overflow checks if the stack is overflowing.
+	// The stack is overflowing when there is no more space to push onto the stack.
+	fn check_stack_overflow(&self, required_change: u8) {
+		// If the stack pointer indicates it will become less than 0,
+		// then the stack is overflowing.
+		if self.s < required_change {
+			panic!("stack overflow");
+		}
+	}
+
+	// check_stack_underflow checks if the stack is underflowing.
+	// The stack is underflowing when there is not enough elements to pop.
+	fn check_stack_underflow(&self, required_change: u16) {
+		// If the stack pointer has less space from the top then the required change,
+		// then the stack is underflowing.
+		if (STACK_REAL_TOP - self.stack_current_address() as u16) < required_change {
+			panic!("stack underflow");
+		}
 	}
 
 	// get_operand_address determines how an address should be read.
@@ -276,7 +409,7 @@ impl CPU {
 			// Execute based off of the ops code.
 			let code_info = OP_CODE_MAP.get(&opscode).expect(&format!("OpCode {:x} is not recognized", opscode));
 
-			// TODO: Organize these alphabetically.
+			// TODO: Organize these alphabetically and in categories.
 			match code_info.code {
 				// Handle ops code LDA.
 				0xA9 | 0xA5 | 0xAD | 0xB5 | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
@@ -345,6 +478,13 @@ impl CPU {
 				0xEA => {
 					// do nothing
 				},
+
+				// Handle ops code TXS (0x9A)
+				// Handle ops code TSX (0xBA)
+				// Handle ops code PHA (0x48)
+				// Handle ops code PLA (0x68)
+				// Handle ops code PHP (0x08)
+				// Handle ops code PLP (0x28)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -548,6 +688,13 @@ impl CPU {
 		self.mem_write(addr, self.y);
 	}
 
+	// txs
+	// tsx
+	// pha
+	// pla
+	// php
+	// plp
+
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
@@ -600,6 +747,7 @@ mod test {
     	assert_eq!(cpu.x, 0);
     	assert_eq!(cpu.y, 0);
     	assert_eq!(cpu.p, 0);
+    	assert_eq!(cpu.s, 0xfd);
     }
 
     #[test]
@@ -618,10 +766,11 @@ mod test {
     	assert_eq!(cpu.x, 0);
     	assert_eq!(cpu.y, 0);
     	assert_eq!(cpu.p, 0);
+    	assert_eq!(cpu.s, 0xfd);
     }
 
-    #[test]
-	#[should_panic]
+    #[test]	
+	#[should_panic(expected = "OpCode f1 is not recognized")]
     fn test_load_and_run_unknown_opcode() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
@@ -1103,11 +1252,209 @@ mod test {
 
 	// None Addressing
 	#[test]
-	#[should_panic]
+	#[should_panic(expected = "not supported")]
 	fn test_get_operand_address_none_happypath() {
 		let mut cpu = CPU::new();
 		cpu.get_operand_address(&AddressingMode::NoneAddressing);
 	}
+
+	// ---------- Stack Operation Tests -----------
+
+	#[test]
+	fn test_stack_push_happypath() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the CPU
+		cpu.reset();
+
+		// set a u8 number
+		let value: u8 = 0x3e;
+
+		// push the value onto the stack
+		cpu.stack_push(value);
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfc);
+
+		// check the value on memory
+		assert_eq!(cpu.mem[0x01fd], value);
+	}
+	
+	#[test]
+	fn test_stack_push_u16_happypath() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the CPU
+		cpu.reset();
+
+		// set a u16 number
+		let value: u16 = 0x4387;
+
+		// push the value onto the stack
+		cpu.stack_push_u16(value);
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfb);
+
+		// check the value on the low value
+		assert_eq!(cpu.mem[0x01fc], 0x87);
+
+		// check the value on the high value
+		assert_eq!(cpu.mem[0x01fd], 0x43);
+	}
+	
+	#[test]
+	fn test_stack_pop_happypath() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// set a u8 number
+		let value: u8 = 0x34;
+
+		// push a value onto the stack
+		cpu.stack_push(value);
+
+		// pop the value off of the stack
+		let actual: u8 = cpu.stack_pop();
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
+
+		// check the value returned
+		assert_eq!(actual, value);
+	}
+
+	#[test]
+	fn test_stack_pop_u16_happypath() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// ---- push 2 u8 values onto the stack ----
+
+		// set two u8 numbers
+		let lo: u8 = 0x43;
+		let high: u8 = 0x67;
+
+		// push 2 values onto the stack
+		cpu.stack_push(high);
+		cpu.stack_push(lo);
+
+		// pop the u16 value off of the stack
+		let actual: u16 = cpu.stack_pop_u16();
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
+
+		// check the value returned
+		assert_eq!(actual, 0x6743);
+
+		// ---- push 1 u16 value onto the stack ----
+
+		// set a single u16 number
+		let value: u16 = 0x1290;
+
+		// push 2 values onto the stack
+		cpu.stack_push_u16(value);
+
+		// pop the u16 value off of the stack
+		let actual: u16 = cpu.stack_pop_u16();
+
+		// check the stack pointer value
+		assert_eq!(cpu.s, 0xfd);
+
+		// check the value returned
+		assert_eq!(actual, value);
+	}
+
+	#[should_panic(expected = "stack underflow")]
+	#[test]
+	fn test_stack_pop_underflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// pop the value off of the stack
+		// this should trigger the panic immediately
+		let actual: u8 = cpu.stack_pop();
+	}
+
+	#[should_panic(expected = "stack underflow")]
+	#[test]
+	fn test_stack_pop_u16_underflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// pop the value off of the stack
+		// this should trigger the panic immediately
+		let actual: u16 = cpu.stack_pop_u16();
+	}
+
+	// Stack pop overflows
+	// We will not be checking for these scenarios.
+	// The current implementation does not permit this to occur.
+
+	// the implementation actually takes this to be a stack underflow
+	#[should_panic(expected = "stack overflow")]
+	#[test]
+	fn test_stack_push_overflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// set the stack pointer to the bottom of the stack.
+		cpu.s = 0;
+
+		let value: u8 = 2;
+
+		// push the value off of the stack
+		// this should trigger the panic immediately
+		cpu.stack_push(value);
+		cpu.stack_push(value);
+	}
+
+	#[should_panic(expected = "stack overflow")]
+	#[test]
+	fn test_stack_push_u16_overflow() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// reset the cpu
+		cpu.reset();
+
+		// set the stack pointer to almost the bottom of the stack
+		// push 2 values should lead to this as an overflow state.
+		cpu.s = 1;
+
+		let value: u8 = 2;
+
+		// push the value off of the stack
+		// this should trigger the panic immediately
+		cpu.stack_push(value);
+		cpu.stack_push(value);
+	}
+
+	// stack push underflow
+	// odd, should never happen case
+	// We won't check for this case.
+
+	// stack push u16 underflow
+	// odd, should never happen case
+	// We won't check for this case.
 
     // ----------------------------------
     // --------- Ops Code Tests ---------
@@ -1129,7 +1476,7 @@ mod test {
         assert_eq!(cpu.a, 0x00);
         assert_eq!(cpu.x, 0x00);
         assert_eq!(cpu.y, 0x00);
-        assert_eq!(cpu.s, 0x00);
+        assert_eq!(cpu.s, 0xfd);
         assert_eq!(cpu.pc, 0x8002);
 
         // Check the processor status is expected:
@@ -3525,4 +3872,11 @@ mod test {
     	// - All other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b0000_1000);   	
     }
+
+    // txs
+	// tsx
+	// pha
+	// pla
+	// php
+	// plp
 }

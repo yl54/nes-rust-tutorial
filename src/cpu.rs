@@ -167,8 +167,7 @@ impl CPU {
 		self.mem_write(addr + 1, high);
 	}
 
-	// function to push onto the stack
-	// take in a u8
+	// stack_push will push a u8 onto the stack
 	fn stack_push(&mut self, value: u8) {
 		// Check that the stack is not overflowing or underflowing.
 		// Underflowing would be a very odd case that should never occur.
@@ -183,8 +182,7 @@ impl CPU {
 		self.s = self.s.wrapping_sub(1);
 	}
 
-	// function to push a u16 onto the stack
-	// take in a u16
+	// stack_push_u16 will push a u16 onto the stack
 	fn stack_push_u16(&mut self, value: u16) {
 		// need to check that we are not overflowing
 		// each stack push action will check this
@@ -204,8 +202,7 @@ impl CPU {
 		self.stack_push(low);
 	}
 
-	// function to pop off the stack
-	// return a u8
+	// stack_pop will pop a u8 off of the stack
 	fn stack_pop(&mut self) -> u8 {
 		// Check that the stack is not underflowing or overflowing.
 		// Overflowing would be a very odd case that should never occur.
@@ -225,8 +222,7 @@ impl CPU {
 		return self.mem_read(addr);
 	}
 
-	// function to pop off a u16 off the stack
-	// return a u16
+	// stack_pop_u16 will pop a u16 off of the stack
 	fn stack_pop_u16(&mut self) -> u16 {
 		// need to check that we are not underflowing
 		// each stack pop action will check this
@@ -249,12 +245,11 @@ impl CPU {
 		return STACK_BOTTOM.wrapping_add(self.s as u16);
 	}
 
-	// TODO: Figure out what to do for stack overflow and underflow checks.
-	// Dont use the address value.
-	// Somehow do a check on the s pointer.
 	// https://chubakbidpaa.com/retro/2020/12/15/6502-stack-copy.html
 	// go to the "Overflow and Underflow" section for more info 
 
+	// check_stack_overflow checks if the stack is overflowing.
+	// The stack is overflowing when there is no more space to push onto the stack.
 	fn check_stack_overflow(&self, required_change: u8) {
 		// If the stack pointer indicates it will become less than 0,
 		// then the stack is overflowing.
@@ -263,6 +258,8 @@ impl CPU {
 		}
 	}
 
+	// check_stack_underflow checks if the stack is underflowing.
+	// The stack is underflowing when there is not enough elements to pop.
 	fn check_stack_underflow(&self, required_change: u16) {
 		// If the stack pointer has less space from the top then the required change,
 		// then the stack is underflowing.
@@ -1263,7 +1260,6 @@ mod test {
 
 	// ---------- Stack Operation Tests -----------
 
-	// stack push
 	#[test]
 	fn test_stack_push_happypath() {
 		// create a cpu
@@ -1285,7 +1281,6 @@ mod test {
 		assert_eq!(cpu.mem[0x01fd], value);
 	}
 	
-	// stack push u16
 	#[test]
 	fn test_stack_push_u16_happypath() {
 		// create a cpu
@@ -1310,8 +1305,6 @@ mod test {
 		assert_eq!(cpu.mem[0x01fd], 0x43);
 	}
 	
-	// stack pop
-
 	#[test]
 	fn test_stack_pop_happypath() {
 		// create a cpu
@@ -1336,7 +1329,6 @@ mod test {
 		assert_eq!(actual, value);
 	}
 
-	// stack pop u16
 	#[test]
 	fn test_stack_pop_u16_happypath() {
 		// create a cpu
@@ -1382,7 +1374,6 @@ mod test {
 		assert_eq!(actual, value);
 	}
 
-	// stack pop underflow
 	#[should_panic(expected = "stack underflow")]
 	#[test]
 	fn test_stack_pop_underflow() {
@@ -1397,7 +1388,6 @@ mod test {
 		let actual: u8 = cpu.stack_pop();
 	}
 
-	// stack pop u16 underflow
 	#[should_panic(expected = "stack underflow")]
 	#[test]
 	fn test_stack_pop_u16_underflow() {
@@ -1416,7 +1406,6 @@ mod test {
 	// We will not be checking for these scenarios.
 	// The current implementation does not permit this to occur.
 
-	// stack push overflow
 	// the implementation actually takes this to be a stack underflow
 	#[should_panic(expected = "stack overflow")]
 	#[test]
@@ -1438,7 +1427,6 @@ mod test {
 		cpu.stack_push(value);
 	}
 
-	// stack push u16 overflow
 	#[should_panic(expected = "stack overflow")]
 	#[test]
 	fn test_stack_push_u16_overflow() {
@@ -1462,9 +1450,11 @@ mod test {
 
 	// stack push underflow
 	// odd, should never happen case
+	// We won't check for this case.
 
 	// stack push u16 underflow
 	// odd, should never happen case
+	// We won't check for this case.
 
     // ----------------------------------
     // --------- Ops Code Tests ---------

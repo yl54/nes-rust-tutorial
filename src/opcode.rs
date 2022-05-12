@@ -117,6 +117,8 @@ lazy_static! {
 		OpCode::new(0xBA, "TSX", 1, 2, AddressingMode::NoneAddressing),
 
 		// PHA
+		OpCode::new(0x48, "PHA", 1, 3, AddressingMode::NoneAddressing),
+
 		// PLA
 		// PHP
 		// PLP

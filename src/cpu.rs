@@ -481,6 +481,8 @@ impl CPU {
 				0xBA => self.tsx(),
 
 				// Handle ops code PHA (0x48)
+				0x48 => self.pha(),
+
 				// Handle ops code PLA (0x68)
 				// Handle ops code PHP (0x08)
 				// Handle ops code PLP (0x28)
@@ -699,7 +701,6 @@ impl CPU {
 		self.s = self.x;
 	}
 
-	// tsx
 	// tsx transfers the contents of the stack pointer to the X register
 	fn tsx(&mut self) {
 		// set the X register to the value of the stack pointer
@@ -709,7 +710,11 @@ impl CPU {
 		self.update_processor_flags(self.x);
 	}
 
-	// pha
+	// pha pushes the A register value onto the stack
+	fn pha(&mut self) {
+		self.stack_push(self.a);
+	}
+
 	// pla
 	// php
 	// plp
@@ -3934,11 +3939,36 @@ mod test {
 
     	// Check that the processor status is expected.
     	// The negative bit is set.
-    	// None of the bits are set.
+    	// None of the other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b1000_0000);
     }
 
 	// pha
+	#[test]
+	fn test_pha_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load A with a value.
+    	// 2. Push the value of A onto the stack.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x34, 0x48, 0x00]);
+
+    	// Check that the A register is expected.
+    	assert_eq!(cpu.a, 0x34);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfc);
+
+    	// Check that the stack has a value pushed onto it.
+    	assert_eq!(cpu.mem[0x01FD], 0x34);
+
+    	// Check that the processor status is expected.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
+    }
+
 	// pla
 	// php
 	// plp

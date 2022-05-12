@@ -474,6 +474,15 @@ impl CPU {
 				// Handle ops code STY
 				0x84 | 0x94 | 0x8C => self.sty(&code_info.mode),
 
+				// Handle ops code TXS
+				0x9A => self.txs(),
+
+				// Handle ops code TSX
+				// Handle ops code PHA
+				// Handle ops code PLA
+				// Handle ops code PHP
+				// Handle ops code PLP
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -688,7 +697,13 @@ impl CPU {
 		self.mem_write(addr, self.y);
 	}
 
-	// txs
+	// txs handles the ops code TXS.
+	// txs transfers the contents of the X register to the stack pointer
+	fn txs(&mut self) {
+		// set the stack pointer to the value of the X register
+		self.s = self.x
+	}
+
 	// tsx
 	// pha
 	// pla
@@ -3874,6 +3889,29 @@ mod test {
     }
 
     // txs
+    // happy path
+    #[test]
+    fn test_txs_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load X with a value.
+    	// 2. Transfer the value of X to the stack pointer.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x34, 0x9a, 0x00]);
+
+    	// Check that the x register is expected.
+    	assert_eq!(cpu.x, 0x34);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0x34);
+
+    	// Check that the processor status is expected.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);   	
+    }
+
 	// tsx
 	// pha
 	// pla

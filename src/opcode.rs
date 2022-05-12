@@ -111,6 +111,8 @@ lazy_static! {
 		// --------- Stack Instructions -----------
 		
 		// TXS
+		OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::NoneAddressing),
+
 		// TSX
 		// PHA
 		// PLA

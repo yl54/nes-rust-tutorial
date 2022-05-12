@@ -477,23 +477,18 @@ impl CPU {
 				// Handle ops code TXS
 				0x9A => self.txs(),
 
-				// Handle ops code TSX
-				// Handle ops code PHA
-				// Handle ops code PLA
-				// Handle ops code PHP
-				// Handle ops code PLP
+				// Handle ops code TSX (0xBA)
+				0xBA => self.tsx(),
+
+				// Handle ops code PHA (0x48)
+				// Handle ops code PLA (0x68)
+				// Handle ops code PHP (0x08)
+				// Handle ops code PLP (0x28)
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
 				},
-
-				// Handle ops code TXS (0x9A)
-				// Handle ops code TSX (0xBA)
-				// Handle ops code PHA (0x48)
-				// Handle ops code PLA (0x68)
-				// Handle ops code PHP (0x08)
-				// Handle ops code PLP (0x28)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -701,10 +696,19 @@ impl CPU {
 	// txs transfers the contents of the X register to the stack pointer
 	fn txs(&mut self) {
 		// set the stack pointer to the value of the X register
-		self.s = self.x
+		self.s = self.x;
 	}
 
 	// tsx
+	// tsx transfers the contents of the stack pointer to the X register
+	fn tsx(&mut self) {
+		// set the X register to the value of the stack pointer
+		self.x = self.s;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
+
 	// pha
 	// pla
 	// php
@@ -3912,7 +3916,28 @@ mod test {
         assert!(cpu.p & 0b1111_1111 == 0b0000_0000);   	
     }
 
-	// tsx
+	#[test]
+    fn test_tsx_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Transfer the value of the stack pointer to the x register.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0xba, 0x00]);
+
+    	// Check that the x register is expected.
+    	assert_eq!(cpu.x, 0xfd);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfd);
+
+    	// Check that the processor status is expected.
+    	// The negative bit is set.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1000_0000);
+    }
+
 	// pha
 	// pla
 	// php

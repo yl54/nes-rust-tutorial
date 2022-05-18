@@ -63,7 +63,7 @@ pub struct CPU {
 	 * 
 	 * 7 N Negative - It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
 	 * 6 V Overflow
-	 * 5 - (Expansion)
+	 * 5 - (Expansion) (Break 2)
 	 * 4 B Break Command
 	 * 3 D Decimal
 	 * 2 I Interrupt Disable
@@ -487,6 +487,8 @@ impl CPU {
 				0x68 => self.pla(),
 
 				// Handle ops code PHP (0x08)
+				0x08 => self.php(),
+
 				// Handle ops code PLP (0x28)
 
 				// Handle ops code NOP (0xEA)
@@ -728,6 +730,19 @@ impl CPU {
 	}
 
 	// php
+	// php pushes the Processor Status value onto the stack, with a modified value
+	fn php(&mut self) {
+		// Create a clone of the processor status
+		let mut status = self.p.clone();
+
+		// Set the Break 1 processor status		
+		// Set the Break 2 processor status
+		status = status | 0b0011_0000;
+
+		// Push the processor status onto the stack
+		self.stack_push(status);
+	}
+
 	// plp
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -4009,6 +4024,7 @@ mod test {
     }
 
     // negative
+	#[test]
 	fn test_pla_negative() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
@@ -4037,6 +4053,7 @@ mod test {
     }
 
     // zero
+	#[test]
     fn test_pla_zero() {
     	// Create a CPU.
     	let mut cpu = CPU::new();
@@ -4060,10 +4077,35 @@ mod test {
 
     	// Check that the processor status is expected.
     	// - Check the Zero Flag is set.
-    	// - None of the bits are set.
+    	// - None of the other bits are set.
         assert!(cpu.p & 0b1111_1111 == 0b0000_0010);
     }
 
 	// php
+	// happy path
+	#[test]
+    fn test_php_happy_path() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+    	// 1. Push the processor status flags onto the stack.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0000);
+	}
+
+	// negative
+
+	// zero
+
 	// plp
 }

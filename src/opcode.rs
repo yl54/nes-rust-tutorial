@@ -123,6 +123,8 @@ lazy_static! {
 		OpCode::new(0x68, "PLA", 1, 4, AddressingMode::NoneAddressing),
 
 		// PHP
+		OpCode::new(0x08, "PLA", 1, 3, AddressingMode::NoneAddressing),
+
 		// PLP
 
 	];

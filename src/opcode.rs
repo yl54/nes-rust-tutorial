@@ -126,6 +126,7 @@ lazy_static! {
 		OpCode::new(0x08, "PHP", 1, 3, AddressingMode::NoneAddressing),
 
 		// PLP
+		OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
 
 	];
 

@@ -63,7 +63,7 @@ pub struct CPU {
 	 * 
 	 * 7 N Negative - It really just tells you if the 7th bit is toggled. Its up to the next instruction to determine how to interpret this flag.
 	 * 6 V Overflow
-	 * 5 - (Expansion)
+	 * 5 - (Expansion) (Break 2)
 	 * 4 B Break Command
 	 * 3 D Decimal
 	 * 2 I Interrupt Disable
@@ -474,17 +474,28 @@ impl CPU {
 				// Handle ops code STY
 				0x84 | 0x94 | 0x8C => self.sty(&code_info.mode),
 
+				// Handle ops code TXS
+				0x9A => self.txs(),
+
+				// Handle ops code TSX (0xBA)
+				0xBA => self.tsx(),
+
+				// Handle ops code PHA (0x48)
+				0x48 => self.pha(),
+
+				// Handle ops code PLA (0x68)
+				0x68 => self.pla(),
+
+				// Handle ops code PHP (0x08)
+				0x08 => self.php(),
+
+				// Handle ops code PLP (0x28)
+				0x28 => self.plp(),
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
 				},
-
-				// Handle ops code TXS (0x9A)
-				// Handle ops code TSX (0xBA)
-				// Handle ops code PHA (0x48)
-				// Handle ops code PLA (0x68)
-				// Handle ops code PHP (0x08)
-				// Handle ops code PLP (0x28)
 
 				// Handle ops code BRK (0x00).
 				// BRK is the break command. It causes an
@@ -688,12 +699,60 @@ impl CPU {
 		self.mem_write(addr, self.y);
 	}
 
-	// txs
-	// tsx
-	// pha
-	// pla
-	// php
-	// plp
+	// txs handles the ops code TXS.
+	// txs transfers the contents of the X register to the stack pointer
+	fn txs(&mut self) {
+		// set the stack pointer to the value of the X register
+		self.s = self.x;
+	}
+
+	// tsx transfers the contents of the stack pointer to the X register
+	fn tsx(&mut self) {
+		// set the X register to the value of the stack pointer
+		self.x = self.s;
+
+		// Change the Processor Status Flags based off of the new X value
+		self.update_processor_flags(self.x);
+	}
+
+	// pha pushes the A register value onto the stack
+	fn pha(&mut self) {
+		self.stack_push(self.a);
+	}
+
+	// pla pulls (pop) the value from the Stack into the A register
+	fn pla(&mut self) {
+		// pop the value off the stack onto the A register
+		self.a = self.stack_pop();
+
+		// Change the Processor Status Flags based off of the new A value
+		self.update_processor_flags(self.a);
+	}
+
+	// php pushes the Processor Status value onto the stack, with a modified value
+	fn php(&mut self) {
+		// Create a clone of the processor status
+		let mut status = self.p.clone();
+
+		// Set the Break 1 processor status		
+		// Set the Break 2 processor status
+		status = status | 0b0011_0000;
+
+		// Push the processor status onto the stack
+		self.stack_push(status);
+	}
+
+	// plp pulls the Procesor Status value off of the stack, with a modified value
+	fn plp(&mut self) {
+		// Pull the bits off of the stack onto the Processor status
+		self.p = self.stack_pop();
+
+		// Unset the Break 1 processor status		
+		self.p = self.p & 0b1110_1111;
+
+		// Set the Break 2 processor status
+		self.p = self.p | 0b0010_0000;
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -3873,10 +3932,294 @@ mod test {
         assert!(cpu.p & 0b1111_1111 == 0b0000_1000);   	
     }
 
-    // txs
-	// tsx
-	// pha
-	// pla
-	// php
-	// plp
+    // -------- TXS --------
+
+    #[test]
+    fn test_txs_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load X with a value.
+    	// 2. Transfer the value of X to the stack pointer.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x34, 0x9a, 0x00]);
+
+    	// Check that the x register is expected.
+    	assert_eq!(cpu.x, 0x34);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0x34);
+
+    	// Check that the processor status is expected.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);   	
+    }
+
+    // -------- TSX --------
+
+	#[test]
+    fn test_tsx_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Transfer the value of the stack pointer to the x register.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0xba, 0x00]);
+
+    	// Check that the x register is expected.
+    	assert_eq!(cpu.x, 0xfd);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfd);
+
+    	// Check that the processor status is expected.
+    	// The negative bit is set.
+    	// None of the other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1000_0000);
+    }
+
+    // -------- PHA --------
+
+	#[test]
+	fn test_pha_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load A with a value.
+    	// 2. Push the value of A onto the stack.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x34, 0x48, 0x00]);
+
+    	// Check that the A register is expected.
+    	assert_eq!(cpu.a, 0x34);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfc);
+
+    	// Check that the stack has a value pushed onto it.
+    	assert_eq!(cpu.mem[0x01FD], 0x34);
+
+    	// Check that the processor status is expected.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
+    }
+
+    // -------- PLA --------
+
+	#[test]
+	fn test_pla_happy_path() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load A with a value.
+    	// 2. Push the value of A onto the stack.
+    	// 3. Load 0 into A to reset A.
+    	// 4. Pop the value onto A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x34, 0x48, 0xa9, 0x00, 0x68, 0x00]);
+
+    	// Check that the A register is expected.
+    	assert_eq!(cpu.a, 0x34);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfd);
+
+    	// Check that the stack has a value pushed onto it.
+    	assert_eq!(cpu.mem[0x01FD], 0x34);
+
+    	// Check that the processor status is expected.
+    	// None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0000);
+    }
+
+	#[test]
+	fn test_pla_negative() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load A with a negative value.
+    	// 2. Push the value of A onto the stack.
+    	// 3. Load 0 into A to reset A.
+    	// 4. Pop the value onto A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0xf6, 0x48, 0xa9, 0x00, 0x68, 0x00]);
+
+    	// Check that the A register is expected.
+    	assert_eq!(cpu.a, 0xf6);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfd);
+
+    	// Check that the stack has a value pushed onto it.
+    	assert_eq!(cpu.mem[0x01FD], 0xf6);
+
+    	// Check that the processor status is expected.
+    	// - Check the Negative Flag is set.
+    	// - None of the bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b1000_0000);
+    }
+
+	#[test]
+    fn test_pla_zero() {
+    	// Create a CPU.
+    	let mut cpu = CPU::new();
+
+    	// Load and run a short program.
+    	// 1. Load A with a zero value.
+    	// 2. Push the value of A onto the stack.
+    	// 3. Load positive into A to reset A.
+    	// 4. Pop the value onto A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x48, 0xa9, 0x23, 0x68, 0x00]);
+
+    	// Check that the A register is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the s register is expected.
+    	assert_eq!(cpu.s, 0xfd);
+
+    	// Check that the stack has a value pushed onto it.
+    	assert_eq!(cpu.mem[0x01FD], 0x00);
+
+    	// Check that the processor status is expected.
+    	// - Check the Zero Flag is set.
+    	// - None of the other bits are set.
+        assert!(cpu.p & 0b1111_1111 == 0b0000_0010);
+    }
+
+    // -------- PHP --------
+
+	#[test]
+    fn test_php_happy_path() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+    	// 1. Push the processor status flags onto the stack.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0000);
+	}
+
+	#[test]
+    fn test_php_negative() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Push the processor status flags onto the stack.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0xf1, 0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b1000_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b1011_0000);
+	}
+
+	#[test]
+    fn test_php_zero() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+    	// 2. Push the processor status flags onto the stack.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0010);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0010);
+	}
+
+    // -------- PLP --------
+
+	#[test]
+    fn test_plp_happy_path() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+    	// 1. Push the processor status flags onto the stack.
+    	// 2. Pull the processor status flags off the stack.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0x08, 0x28, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0010_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFD);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0000);
+	}
+
+	#[test]
+    fn test_plp_negative() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Push the processor status flags onto the stack.
+    	// 3. Pull the processor status flags off the stack.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0xf1, 0x08, 0x28, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b1010_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFD);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b1011_0000);
+	}
+
+	#[test]
+    fn test_plp_zero() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+    	// 2. Push the processor status flags onto the stack.
+    	// 3. Pull the processor status flags off the stack.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x08, 0x28, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0010_0010);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFD);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0010);
+	}
 }

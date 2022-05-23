@@ -4104,8 +4104,45 @@ mod test {
 	}
 
 	// negative
+	#[test]
+    fn test_php_negative() {
+		// create a cpu
+    	let mut cpu = CPU::new();
 
-	// zero
+		// Load and run a short program.
+    	// 1. Push the processor status flags onto the stack.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0xa9, 0xf1, 0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b1000_0000);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b1011_0000);
+	}
+
+	#[test]
+    fn test_php_zero() {
+		// create a cpu
+    	let mut cpu = CPU::new();
+
+		// Load and run a short program.
+    	// 1. Push the processor status flags onto the stack.
+    	// 2. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x08, 0x00]);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0010);
+
+    	// Check that the stack pointer is expected.
+    	assert_eq!(cpu.s, 0xFC);
+
+    	// Check that the stack content is expected
+    	assert_eq!(cpu.mem[0x01FD], 0b0011_0010);
+	}
 
 	// plp
 }

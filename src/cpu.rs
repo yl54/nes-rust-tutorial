@@ -720,7 +720,6 @@ impl CPU {
 		self.stack_push(self.a);
 	}
 
-	// pla
 	// pla pulls (pop) the value from the Stack into the A register
 	fn pla(&mut self) {
 		// pop the value off the stack onto the A register
@@ -730,7 +729,6 @@ impl CPU {
 		self.update_processor_flags(self.a);
 	}
 
-	// php
 	// php pushes the Processor Status value onto the stack, with a modified value
 	fn php(&mut self) {
 		// Create a clone of the processor status
@@ -744,7 +742,6 @@ impl CPU {
 		self.stack_push(status);
 	}
 
-	// plp
 	// plp pulls the Procesor Status value off of the stack, with a modified value
 	fn plp(&mut self) {
 		// Pull the bits off of the stack onto the Processor status

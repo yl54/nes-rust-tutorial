@@ -110,24 +110,12 @@ lazy_static! {
 
 		// --------- Stack Instructions -----------
 		
-		// TXS
 		OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::NoneAddressing),
-
-		// TSX
 		OpCode::new(0xBA, "TSX", 1, 2, AddressingMode::NoneAddressing),
-
-		// PHA
 		OpCode::new(0x48, "PHA", 1, 3, AddressingMode::NoneAddressing),
-
-		// PLA
 		OpCode::new(0x68, "PLA", 1, 4, AddressingMode::NoneAddressing),
-
-		// PHP
 		OpCode::new(0x08, "PHP", 1, 3, AddressingMode::NoneAddressing),
-
-		// PLP
 		OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
-
 	];
 
 	// function to create hash table from code to OpCode

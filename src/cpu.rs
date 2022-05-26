@@ -492,6 +492,11 @@ impl CPU {
 				// Handle ops code PLP (0x28)
 				0x28 => self.plp(),
 
+				// ASL
+				// LSR
+				// ROL
+				// ROR
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -753,6 +758,11 @@ impl CPU {
 		// Set the Break 2 processor status
 		self.p = self.p | 0b0010_0000;
 	}
+
+	// ASL
+	// LSR
+	// ROL
+	// ROR
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -4222,4 +4232,9 @@ mod test {
     	// Check that the stack content is expected
     	assert_eq!(cpu.mem[0x01FD], 0b0011_0010);
 	}
+
+	// --------- ASL ---------
+	// --------- LSR ---------
+	// --------- ROL ---------
+	// --------- ROR ---------
 }

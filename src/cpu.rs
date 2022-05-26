@@ -759,7 +759,41 @@ impl CPU {
 		self.p = self.p | 0b0010_0000;
 	}
 
-	// ASL
+	// asl shifts either the accumulator or address memory location 1 bit to the left.
+	// It updates the Z, C, and N processor flags.
+
+	// ASL for accumulator
+		// Get the accumulator value
+
+		// Check the carry value for the accumulator value
+		// If the carry value is 1
+			// set the carry flag to 1
+		// else
+			// set the carry flag to 0
+
+		// Shift the accumulator bits by 1 to the left
+
+		// Set the accumulator to the new value
+
+		// Update the N and Z processor flags
+
+	// ASL for memory
+		// Get the address based on the mode passed in
+
+		// Get the memory value
+
+		// Check the carry value for the memory value
+		// If the carry value is 1
+			// set the carry flag to 1
+		// else
+			// set the carry flag to 0
+
+		// Shift the meory bits by 1 to the left
+
+		// Set the memory location to the new value
+
+		// Update the N and Z processor flags
+
 	// LSR
 	// ROL
 	// ROR

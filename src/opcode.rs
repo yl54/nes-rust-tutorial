@@ -116,6 +116,12 @@ lazy_static! {
 		OpCode::new(0x68, "PLA", 1, 4, AddressingMode::NoneAddressing),
 		OpCode::new(0x08, "PHP", 1, 3, AddressingMode::NoneAddressing),
 		OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
+
+		// Shift Instructions
+		// ASL
+		// LSR
+		// ROL
+		// ROR
 	];
 
 	// function to create hash table from code to OpCode

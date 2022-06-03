@@ -119,6 +119,8 @@ lazy_static! {
 
 		// Shift Instructions
 		// ASL
+		OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::NoneAddressing),
+
 		// LSR
 		// ROL
 		// ROR

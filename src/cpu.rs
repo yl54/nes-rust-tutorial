@@ -57,6 +57,7 @@ pub struct CPU {
 	// Similar to X.
 	pub y: u8,
 
+	// TODO: Migrate to new Processor Status Class
 	/* P - Processor Status
 	 * 8 bit register represents 7 status flags.
 	 * Each one is toggled depending on operation.
@@ -493,6 +494,8 @@ impl CPU {
 				0x28 => self.plp(),
 
 				// ASL
+				0x0A => self.asl_accumulator(),
+
 				// LSR
 				// ROL
 				// ROR
@@ -763,19 +766,29 @@ impl CPU {
 	// It updates the Z, C, and N processor flags.
 
 	// ASL for accumulator
+	fn asl_accumulator(&mut self) {
 		// Get the accumulator value
+		let mut data = self.a;
 
-		// Check the carry value for the accumulator value
-		// If the carry value is 1
+		// Check what the carry value is for the accumulator value
+		// If the carry value is 1, which indicates negative
+		if data >> 7 == 1 {
 			// set the carry flag to 1
-		// else
+			self.p = self.p | 0b0000_0001;
+		} else {
 			// set the carry flag to 0
+			self.p = self.p & 0b1111_1110;
+		}
 
 		// Shift the accumulator bits by 1 to the left
+		data = data << 1;
 
 		// Set the accumulator to the new value
+		self.a = data;
 
 		// Update the N and Z processor flags
+		self.update_processor_flags(data);
+	}
 
 	// ASL for memory
 		// Get the address based on the mode passed in
@@ -4268,6 +4281,107 @@ mod test {
 	}
 
 	// --------- ASL ---------
+
+	#[test]
+	fn test_asl_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x1f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.a, 0x3E);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_asl_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x9f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.a, 0x3E);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A that will become negative after shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x5f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.a, 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A that will become zero after the shift, but it has a shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x80, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.   	
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
 	// --------- LSR ---------
 	// --------- ROL ---------
 	// --------- ROR ---------

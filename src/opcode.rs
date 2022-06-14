@@ -122,6 +122,7 @@ lazy_static! {
 		OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
 		OpCode::new(0x16, "ASL", 2, 6, AddressingMode::ZeroPageX),
+		OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
 
 		// LSR
 		// ROL

@@ -4682,8 +4682,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// negative before shift
-    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
     #[test]
 	fn test_asl_absolute_negative_before_shift() {
 		// create a cpu
@@ -4708,8 +4706,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative after shift
-    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
 	#[test]
 	fn test_asl_absolute_negative_after_shift() {
 		// create a cpu
@@ -4734,7 +4730,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-	// zero
 	#[test]
 	fn test_asl_absolute_zero() {
 		// create a cpu
@@ -4758,8 +4753,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// zero with carry
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
 	#[test]
 	fn test_asl_absolute_zero_with_carry() {
 		// create a cpu
@@ -4787,8 +4780,6 @@ mod test {
 
 	// ------- absolute x --------
 
-    // happy path
-    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
 	#[test]
 	fn test_asl_absolutex_happy_path() {
 		// create a cpu
@@ -4816,8 +4807,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// negative before shift
-    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
 	#[test]
 	fn test_asl_absolutex_negative_before_shift() {
 		// create a cpu
@@ -4846,8 +4835,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative after shift
-    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
 	#[test]
 	fn test_asl_absolutex_negative_after_shift() {
 		// create a cpu
@@ -4876,7 +4863,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-	// zero
 	#[test]
 	fn test_asl_absolutex_zero() {
 		// create a cpu
@@ -4904,8 +4890,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// zero with carry
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
 	#[test]
 	fn test_asl_absolutex_zero_with_carry() {
 		// create a cpu

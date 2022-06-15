@@ -57,6 +57,7 @@ pub struct CPU {
 	// Similar to X.
 	pub y: u8,
 
+	// TODO: Migrate to new Processor Status Class
 	/* P - Processor Status
 	 * 8 bit register represents 7 status flags.
 	 * Each one is toggled depending on operation.
@@ -492,6 +493,14 @@ impl CPU {
 				// Handle ops code PLP (0x28)
 				0x28 => self.plp(),
 
+				// ASL
+				0x0A => self.asl_accumulator(),
+				0x06 | 0x16 | 0x0E | 0x1E => self.asl_memory(&code_info.mode),
+
+				// LSR
+				// ROL
+				// ROR
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -753,6 +762,67 @@ impl CPU {
 		// Set the Break 2 processor status
 		self.p = self.p | 0b0010_0000;
 	}
+
+	// asl shifts either the accumulator or address memory location 1 bit to the left.
+	// It updates the Z, C, and N processor flags.
+
+	// ASL for accumulator
+	fn asl_accumulator(&mut self) {
+		// Get the accumulator value
+		let mut data = self.a;
+
+		// Check what the carry value is for the accumulator value
+		// If the carry value is 1, which indicates negative
+		if data >> 7 == 1 {
+			// set the carry flag to 1
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// set the carry flag to 0
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// Shift the accumulator bits by 1 to the left
+		data = data << 1;
+
+		// Set the accumulator to the new value
+		self.a = data;
+
+		// Update the N and Z processor flags
+		self.update_processor_flags(data);
+	}
+
+	// ASL for memory
+	fn asl_memory(&mut self, mode: &AddressingMode) {
+		// Get the address based on the mode passed in
+		let addr = self.get_operand_address(mode);
+
+		// Get the memory value
+		let mut data = self.mem_read(addr);
+
+		// Check the carry value for the memory value
+		// If the carry value is 1
+		if data >> 7 == 1 {
+			// set the carry flag to 1
+			self.p = self.p | 0b0000_0001;
+		} else {
+		// else
+			// set the carry flag to 0
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// Shift the memory bits by 1 to the left
+		data = data << 1;
+
+		// Set the memory location to the new value
+		self.mem_write(addr, data);
+
+		// Update the N and Z processor flags
+		self.update_processor_flags(data);
+	}
+
+	// LSR
+	// ROL
+	// ROR
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -4222,4 +4292,634 @@ mod test {
     	// Check that the stack content is expected
     	assert_eq!(cpu.mem[0x01FD], 0b0011_0010);
 	}
+
+	// --------- ASL ---------
+
+	#[test]
+	fn test_asl_accumulator_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x1f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.a, 0x3E);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_asl_accumulator_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x9f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.a, 0x3E);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_accumulator_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A that will become negative after shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x5f, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.a, 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_accumulator_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_accumulator_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A that will become zero after the shift, but it has a shift.
+    	// 2. Perform the left shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x80, 0x0a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.   	
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	// ------- zero page --------
+
+	#[test]
+	fn test_asl_zeropage_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+		// 2. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x1f, 0x85, 0x23, 0x06, 0x23, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x1f);
+
+    	// Check that the value on memory is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x0023], 0x3e);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_asl_zeropage_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+		// 2. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x9f, 0x85, 0x23, 0x06, 0x23, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x9f);
+
+    	// Check that the value on memory is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x0023], 0x3e);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_zeropage_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A that will become negative after shift.
+		// 2. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x5f, 0x85, 0x23, 0x06, 0x23, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x5f);
+
+    	// Check that the value on memory is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.mem[0x0023], 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_zeropage_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+		// 2. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x23, 0x06, 0x23, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the value on memory is expected.
+    	assert_eq!(cpu.mem[0x0023], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_zeropage_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A that will become zero after the shift, but it has a shift.
+		// 2. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x80, 0x85, 0x23, 0x06, 0x23, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the value on memory is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0023], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	// ------- zero page x --------
+
+	#[test]
+	fn test_asl_zeropagex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A, it wouldn't become negative after shift.
+		// 3. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x1f, 0x85, 0x23, 0x16, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x1f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x0023], 0x3e);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_asl_zeropagex_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A, it wouldn't become negative after shift.
+		// 3. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x9f, 0x85, 0x23, 0x16, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x9f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x0023], 0x3e);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_zeropagex_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A that will become negative after shift.
+		// 3. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x5f, 0x85, 0x23, 0x16, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x5f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.mem[0x0023], 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_zeropagex_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a zero value into A.
+		// 3. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x00, 0x85, 0x23, 0x16, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	assert_eq!(cpu.mem[0x0023], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_zeropagex_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A that will become zero after the shift, but it has a shift.
+		// 3. Load the accumulator value into memory in first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x80, 0x85, 0x23, 0x16, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0023], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	// ------- absolute --------
+	 
+    #[test]
+	fn test_asl_absolute_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+		// 2. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x1f, 0x8d, 0x43, 0xe3, 0x0E, 0x43, 0xe3, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x1f);
+
+    	// Check that the value on memory is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0xe343], 0x3e);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_asl_absolute_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A, it wouldn't become negative after shift.
+		// 2. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x9f, 0x8d, 0x43, 0xe3, 0x0E, 0x43, 0xe3, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x9f);
+
+    	// Check that the value on memory is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0xe343], 0x3e);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_absolute_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A, it will become negative after shift.
+		// 2. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x5f, 0x8d, 0x43, 0xe3, 0x0E, 0x43, 0xe3, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x5f);
+
+    	// Check that the value on memory is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.mem[0xe343], 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_absolute_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a zero value into A.
+		// 2. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x43, 0xe3, 0x0E, 0x43, 0xe3, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the value on memory is expected.
+    	assert_eq!(cpu.mem[0xe343], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_absolute_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A that will become zero after the shift, but it has a shift.
+		// 2. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 3. Perform the left shift on the value put in the memory.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x80, 0x8d, 0x43, 0xe3, 0x0E, 0x43, 0xe3, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the value on memory is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0xe343], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	// ------- absolute x --------
+
+	#[test]
+	fn test_asl_absolutex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A, it wouldn't become negative after shift.
+		// 3. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x1f, 0x8d, 0x23, 0x43, 0x1E, 0x21, 0x43, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x1f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x1f = 0001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x4323], 0x3e);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_asl_absolutex_negative_before_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A, it wouldn't become negative after shift.
+		// 3. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x9f, 0x8d, 0x23, 0x43, 0x1E, 0x21, 0x43, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x9f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x9f = 1001 1111  ->  0011 1110 = 0x3e
+    	assert_eq!(cpu.mem[0x4323], 0x3e);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	#[test]
+	fn test_asl_absolutex_negative_after_shift() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A, it will become negative after shift.
+		// 3. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x5f, 0x8d, 0x23, 0x43, 0x1E, 0x21, 0x43, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x5f);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x5f = 0101 1111  ->  1011 1110 = 0xbe
+    	assert_eq!(cpu.mem[0x4323], 0xbe);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_asl_absolutex_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load zero into A.
+		// 3. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x00, 0x8d, 0x23, 0x43, 0x1E, 0x21, 0x43, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	assert_eq!(cpu.mem[0x4323], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_asl_absolutex_zero_with_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A that will become zero after the shift, but it has a shift.
+		// 3. Load the accumulator value into memory after the first 256 bytes, it wouldn't become negative after shift.
+    	// 4. Perform the left shift on the value put in the memory.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x80, 0x8d, 0x23, 0x43, 0x1E, 0x21, 0x43, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the x value is expected.
+    	assert_eq!(cpu.x, 0x02);
+
+    	// Check that the value on memory is expected.
+    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x4323], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	// --------- LSR ---------
+	// --------- ROL ---------
+	// --------- ROR ---------
 }

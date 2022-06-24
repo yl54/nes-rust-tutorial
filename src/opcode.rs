@@ -126,6 +126,12 @@ lazy_static! {
 		OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::AbsoluteX),
 
 		// LSR
+		// accumulator
+		// zero page
+		// zero page x
+		// absolute
+		// absolute x
+
 		// ROL
 		// ROR
 	];

@@ -821,6 +821,35 @@ impl CPU {
 	}
 
 	// LSR
+
+	// lsr accumulator
+		// Get the value in the accumulator
+
+		// Check if the 0 bit is 1.
+		// If so, set the carry bit.
+
+		// If not, clear the carry bit.
+
+		// Shift bits to the right by 1
+
+		// Set the accumulator to the new value.
+
+		// Update the N and Z processor status flags 
+
+	// lsr memory
+		// Get the value from memory
+
+		// Check if the 0 bit is 1
+		// If so, set the carry bit
+
+		// If not, clear the carry bit.
+
+		// Shift bits to the right by 1
+
+		// Set the memory address to the new value
+
+		// Update the N and Z processor status flags.
+
 	// ROL
 	// ROR
 
@@ -4295,6 +4324,8 @@ mod test {
 
 	// --------- ASL ---------
 
+	// ------ accumulator -------
+
 	#[test]
 	fn test_asl_accumulator_happy_path() {
 		// create a cpu
@@ -4920,6 +4951,42 @@ mod test {
 	}
 
 	// --------- LSR ---------
+
+	// ------ accumulator -------
+	// happy path
+	// carry bit is set regular
+	// 0
+	// 1
+	// negative number input
+
+	// ------- zero page --------
+	// happy path
+	// carry bit is set regular
+	// 0
+	// 1
+	// negative number input
+
+	// ------- zero page x --------
+	// happy path
+	// carry bit is set regular
+	// 0
+	// 1
+	// negative number input
+
+	// ------- absolute --------
+	// happy path
+	// carry bit is set regular
+	// 0
+	// 1
+	// negative number input
+
+	// ------- absolute x --------
+	// happy path
+	// carry bit is set regular
+	// 0
+	// 1
+	// negative number input
+
 	// --------- ROL ---------
 	// --------- ROR ---------
 }

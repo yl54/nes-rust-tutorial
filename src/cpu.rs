@@ -499,6 +499,7 @@ impl CPU {
 
 				// LSR
 				0x4A => self.lsr_accumulator(),
+				0x46 => self.lsr_memory(&code_info.mode),
 
 				// ROL
 				// ROR
@@ -849,18 +850,31 @@ impl CPU {
 	}
 
 	// lsr memory
+	fn lsr_memory(&mut self, mode: &AddressingMode) {
+		// Get the address based on the mode passed in
+		let addr = self.get_operand_address(mode);
+		
 		// Get the value from memory
+		let mut data = self.mem_read(addr);
 
 		// Check if the 0 bit is 1
 		// If so, set the carry bit
-
+		if data & 0b0000_0001 == 1 {
+			self.p = self.p | 0b0000_0001;
 		// If not, clear the carry bit.
+		} else {
+			self.p = self.p & 0b1111_1110;
+		}
 
 		// Shift bits to the right by 1
+		data = data >> 1;
 
 		// Set the memory address to the new value
+		self.mem_write(addr, data);
 
 		// Update the N and Z processor status flags.
+		self.update_processor_flags(data);
+	}
 
 	// ROL
 	// ROR
@@ -5065,6 +5079,28 @@ mod test {
 	// ------- zero page --------
 	// happy path
     	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    #[test]
+	fn test_lsr_zeropage_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A.
+		// 2. Load a value into memory in the first 256 bytes.
+    	// 2. Perform the right shift on the memory value.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x08, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
 
 	// carry bit is set regular
     	// 0x09 = 0000 1001  ->  0000 0100 = 0x04

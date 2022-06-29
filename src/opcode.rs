@@ -130,6 +130,8 @@ lazy_static! {
 		OpCode::new(0x4A, "LSR", 1, 2, AddressingMode::NoneAddressing),
 
 		// zero page
+		OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
+
 		// zero page x
 		// absolute
 		// absolute x

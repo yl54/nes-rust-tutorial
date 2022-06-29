@@ -4965,18 +4965,102 @@ mod test {
 	// --------- LSR ---------
 
 	// ------ accumulator -------
-	// happy path
+	#[test]
+	fn test_lsr_accumulator_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x08, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
     	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x04);
 
-	// carry bit is set regular
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it has a carry.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x09, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
     	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x04);
 
-	// 0
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
 
-	// 1
+	#[test]
+	fn test_lsr_accumulator_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
 
-	// negative number input
+		// Load and run a short program.
+		// 1. Load zero value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x88, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
     	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
 
 	// ------- zero page --------
 	// happy path

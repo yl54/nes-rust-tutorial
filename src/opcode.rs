@@ -127,6 +127,8 @@ lazy_static! {
 
 		// LSR
 		// accumulator
+		OpCode::new(0x4A, "LSR", 1, 2, AddressingMode::NoneAddressing),
+
 		// zero page
 		// zero page x
 		// absolute

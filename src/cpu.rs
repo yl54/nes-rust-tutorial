@@ -498,6 +498,8 @@ impl CPU {
 				0x06 | 0x16 | 0x0E | 0x1E => self.asl_memory(&code_info.mode),
 
 				// LSR
+				0x4A => self.lsr_accumulator(),
+
 				// ROL
 				// ROR
 
@@ -823,18 +825,28 @@ impl CPU {
 	// LSR
 
 	// lsr accumulator
+	fn lsr_accumulator(&mut self) {
 		// Get the value in the accumulator
+		let mut data = self.a;
 
 		// Check if the 0 bit is 1.
 		// If so, set the carry bit.
-
+		if data & 0b0000_0001 == 1 {
+			self.p = self.p | 0b0000_0001;
 		// If not, clear the carry bit.
+		} else {
+			self.p = self.p & 0b1111_1110;
+		}
 
 		// Shift bits to the right by 1
+		data = data >> 1;
 
 		// Set the accumulator to the new value.
+		self.a = data;
 
-		// Update the N and Z processor status flags 
+		// Update the N and Z processor status flags
+		self.update_processor_flags(data);
+	}
 
 	// lsr memory
 		// Get the value from memory
@@ -4954,38 +4966,73 @@ mod test {
 
 	// ------ accumulator -------
 	// happy path
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+
 	// carry bit is set regular
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+
 	// 0
+
 	// 1
+
 	// negative number input
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
 
 	// ------- zero page --------
 	// happy path
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+
 	// carry bit is set regular
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+
 	// 0
+
 	// 1
+
 	// negative number input
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
 
 	// ------- zero page x --------
 	// happy path
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+
 	// carry bit is set regular
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+
 	// 0
+
 	// 1
+
 	// negative number input
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
 
 	// ------- absolute --------
 	// happy path
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+
 	// carry bit is set regular
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+
 	// 0
+
 	// 1
+
 	// negative number input
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
 
 	// ------- absolute x --------
 	// happy path
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+
 	// carry bit is set regular
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+
 	// 0
+
 	// 1
+
 	// negative number input
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
 
 	// --------- ROL ---------
 	// --------- ROR ---------

@@ -139,6 +139,7 @@ lazy_static! {
 		OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
 
 		// absolute x
+		OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::AbsoluteX),
 
 		// ROL
 		// ROR

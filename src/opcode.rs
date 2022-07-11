@@ -136,6 +136,8 @@ lazy_static! {
 		OpCode::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPageX),
 
 		// absolute
+		OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
+
 		// absolute x
 
 		// ROL

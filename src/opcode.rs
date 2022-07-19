@@ -118,6 +118,7 @@ lazy_static! {
 		OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
 
 		// Shift Instructions
+
 		// ASL
 		OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
@@ -133,6 +134,27 @@ lazy_static! {
 		OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::AbsoluteX),
 
 		// ROL
+
+		// accumulator
+		// $2A
+		// 1 2
+
+		// zero page
+		// $26
+		// 2 5
+
+		// zero page x
+		// $36
+		// 2 6
+
+		// absolute
+		// $2E
+		// 3 6 
+
+		// absolute x
+		// $3E
+		// 3 7
+
 		// ROR
 	];
 

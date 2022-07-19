@@ -498,6 +498,9 @@ impl CPU {
 				0x06 | 0x16 | 0x0E | 0x1E => self.asl_memory(&code_info.mode),
 
 				// LSR
+				0x4A => self.lsr_accumulator(),
+				0x46 | 0x56 | 0x4E | 0x5E => self.lsr_memory(&code_info.mode),
+
 				// ROL
 				// ROR
 
@@ -821,6 +824,59 @@ impl CPU {
 	}
 
 	// LSR
+	// lsr shifts the bits to the right by 1.
+
+	// lsr accumulator
+	fn lsr_accumulator(&mut self) {
+		// Get the value in the accumulator
+		let mut data = self.a;
+
+		// Check if the 0 bit is 1.
+		// If so, set the carry bit.
+		if data & 0b0000_0001 == 1 {
+			self.p = self.p | 0b0000_0001;
+		// If not, clear the carry bit.
+		} else {
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// Shift bits to the right by 1
+		data = data >> 1;
+
+		// Set the accumulator to the new value.
+		self.a = data;
+
+		// Update the N and Z processor status flags
+		self.update_processor_flags(data);
+	}
+
+	// lsr memory
+	fn lsr_memory(&mut self, mode: &AddressingMode) {
+		// Get the address based on the mode passed in
+		let addr = self.get_operand_address(mode);
+		
+		// Get the value from memory
+		let mut data = self.mem_read(addr);
+
+		// Check if the 0 bit is 1
+		// If so, set the carry bit
+		if data & 0b0000_0001 == 1 {
+			self.p = self.p | 0b0000_0001;
+		// If not, clear the carry bit.
+		} else {
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// Shift bits to the right by 1
+		data = data >> 1;
+
+		// Set the memory address to the new value
+		self.mem_write(addr, data);
+
+		// Update the N and Z processor status flags.
+		self.update_processor_flags(data);
+	}
+
 	// ROL
 	// ROR
 
@@ -4295,6 +4351,8 @@ mod test {
 
 	// --------- ASL ---------
 
+	// ------ accumulator -------
+
 	#[test]
 	fn test_asl_accumulator_happy_path() {
 		// create a cpu
@@ -4920,6 +4978,592 @@ mod test {
 	}
 
 	// --------- LSR ---------
+
+	// ------ accumulator -------
+
+	#[test]
+	fn test_lsr_accumulator_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x08, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it has a carry.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x09, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x04);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+	#[test]
+	fn test_lsr_accumulator_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+    	// 2. Perform the right shift on the accumulator.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x88, 0x4a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	// ------- zero page --------
+
+    #[test]
+	fn test_lsr_zeropage_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A.
+		// 2. Load a value into memory in the first 256 bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x08, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+    #[test]
+	fn test_lsr_zeropage_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it has a carry.
+		// 2. Load a positive value into memory in the first 256 bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x09, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x09);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x04);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
+
+	#[test]
+	fn test_lsr_zeropage_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a 0 value into A.
+		// 2. Load a value into memory in the first 256 bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_zeropage_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a 1 value into A.
+		// 2. Load a value into memory in the first 256 bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+	#[test]
+	fn test_lsr_zeropage_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+		// 2. Load a 1 value into memory in the first 256 bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x88, 0x85, 0x02, 0x46, 0x02, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x88);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	// ------- zero page x --------
+
+    #[test]
+	fn test_lsr_zeropagex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A.
+		// 3. Load a value into memory in the first 256 bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x08, 0x85, 0x02, 0x56, 0x00, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+    #[test]
+	fn test_lsr_zeropagex_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A, it has a carry.
+		// 3. Load a value into memory in the first 256 bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x09, 0x85, 0x02, 0x56, 0x00, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x09);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x04);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
+
+	#[test]
+	fn test_lsr_zeropagex_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a 0 value into A.
+		// 3. Load a value into memory in the first 256 bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x00, 0x85, 0x02, 0x56, 0x00, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_zeropagex_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a 1 value into A.
+		// 3. Load a value into memory in the first 256 bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x01, 0x85, 0x02, 0x56, 0x00, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+    #[test]
+	fn test_lsr_zeropagex_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A.
+		// 3. Load a value into memory in the first 256 bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x88, 0x85, 0x02, 0x56, 0x00, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x88);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x0002], 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	// ------- absolute --------
+
+    #[test]
+	fn test_lsr_absolute_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A.
+		// 2. Load a value into memory in the bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x08, 0x8d, 0x02, 0x32, 0x4e, 0x02, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+    #[test]
+	fn test_lsr_absolute_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it has a carry.
+		// 2. Load a value into memory in the bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x09, 0x8d, 0x02, 0x32, 0x4e, 0x02, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x09);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x04);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
+
+	#[test]
+	fn test_lsr_absolute_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+		// 2. Load a value into memory in the bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x02, 0x32, 0x4e, 0x02, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_absolute_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load a value into memory in the bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x8d, 0x02, 0x32, 0x4e, 0x02, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+    #[test]
+	fn test_lsr_absolute_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a negative value into A.
+		// 2. Load a value into memory in the bytes.
+    	// 3. Perform the right shift on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x88, 0x8d, 0x02, 0x32, 0x4e, 0x02, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x88);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+	// ------- absolute x --------
+
+    #[test]
+	fn test_lsr_absolutex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A.
+		// 3. Load a value into memory in the bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x08, 0x8d, 0x02, 0x32, 0x5e, 0x00, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x08 = 0000 1000  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x04);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
+    #[test]
+	fn test_lsr_absolutex_carry_bit_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a positive value into A, it has a carry.
+		// 3. Load a value into memory in the bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x09, 0x8d, 0x02, 0x32, 0x5e, 0x00, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x09 = 0000 1001  ->  0000 0100 = 0x04
+    	assert_eq!(cpu.a, 0x09);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x04);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+    }
+
+	#[test]
+	fn test_lsr_absolutex_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load 0 into A, it has a carry.
+		// 3. Load a value into memory in the bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x00, 0x8d, 0x02, 0x32, 0x5e, 0x00, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+    }
+
+	#[test]
+	fn test_lsr_absolutex_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load 1 into A, it has a carry.
+		// 3. Load a value into memory in the bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x01, 0x8d, 0x02, 0x32, 0x5e, 0x00, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+    }
+
+    #[test]
+	fn test_lsr_absolutex_negative() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into X.
+		// 2. Load a negative value into A.
+		// 3. Load a value into memory in the bytes.
+    	// 4. Perform the right shift on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x02, 0xa9, 0x88, 0x8d, 0x02, 0x32, 0x5e, 0x00, 0x32, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x88 = 1000 1000  ->  0100 0100 = 0x44
+    	assert_eq!(cpu.a, 0x88);
+
+    	// Check that the memory value is expected.
+    	assert_eq!(cpu.mem[0x3202], 0x44);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+    }
+
 	// --------- ROL ---------
 	// --------- ROR ---------
 }

@@ -502,6 +502,7 @@ impl CPU {
 				0x46 | 0x56 | 0x4E | 0x5E => self.lsr_memory(&code_info.mode),
 
 				// ROL
+
 				// ROR
 
 				// Handle ops code NOP (0xEA)
@@ -878,6 +879,45 @@ impl CPU {
 	}
 
 	// ROL
+
+	// acumulator
+		// get the data from the accumulator
+
+		// Record the current value of the carry
+
+		// Check if there is a carry bit to set, bit 7 is the carry bit
+			// If so, set carry to 1
+
+			// If not, set carry 0
+
+		// Shift bits to the left
+
+		// Shift the recorded carry into bit 0
+
+		// Set the accumulator to new value
+
+		// Update the processor flags
+
+	// memory
+		// Get the address of where to get the value
+
+		// get the data from the memory
+
+		// Record the current value of the carry
+
+		// Check if there is a carry bit, bit 7 is the carry bit
+			// If so, set carry to 1
+
+			// If not, set carry 0
+
+		// Shift bits to the left
+
+		// Shift the recorded carry into bit 0
+
+		// Set the memory to new value
+
+		// Update the processor flags
+
 	// ROR
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
@@ -5565,5 +5605,20 @@ mod test {
     }
 
 	// --------- ROL ---------
+
+	// ------- accumulator --------
+	// happy path
+	// all middle bits set, end bits not set, no carry bit set
+	// all middle bits set, end bits not set, carry bit set
+	// 0 with carry bit set
+	// 0 without carry bit set
+	// negative value with carry set
+	// negative value without carry set
+
+	// ------- zero page --------
+	// ------- zero page x --------
+	// ------- absolute --------
+	// ------- absolute x --------
+
 	// --------- ROR ---------
 }

@@ -126,19 +126,10 @@ lazy_static! {
 		OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::AbsoluteX),
 
 		// LSR
-		// accumulator
 		OpCode::new(0x4A, "LSR", 1, 2, AddressingMode::NoneAddressing),
-
-		// zero page
 		OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
-
-		// zero page x
 		OpCode::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPageX),
-
-		// absolute
 		OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
-
-		// absolute x
 		OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::AbsoluteX),
 
 		// ROL

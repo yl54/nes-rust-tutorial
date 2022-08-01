@@ -138,6 +138,7 @@ lazy_static! {
 		// accumulator
 		// $2A
 		// 1 2
+		OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::NoneAddressing),
 
 		// zero page
 		// $26

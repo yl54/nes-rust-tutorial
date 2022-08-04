@@ -503,6 +503,7 @@ impl CPU {
 
 				// ROL
 				0x2A => self.rol_accumulator(),
+				0x26 => self.rol_memory(&code_info.mode),
 
 				// ROR
 
@@ -913,24 +914,38 @@ impl CPU {
 	}
 
 	// memory
+	fn rol_memory(&mut self, mode: &AddressingMode) {
 		// Get the address of where to get the value
+		let addr = self.get_operand_address(mode);
 
 		// get the data from the memory
+		let mut data = self.mem_read(addr);
 
 		// Record the current value of the carry
+		// This can only yield 0 or 1.
+		let carry = self.p & 0b0000_0001;
 
 		// Check if there is a carry bit, bit 7 is the carry bit
+		if data & 0b1000_0000 == 0b1000_0000 {
 			// If so, set carry to 1
-
+			self.p = self.p | 0b1000_0000;
+		} else {
 			// If not, set carry 0
+			self.p = self.p & 0b0111_1111;
+		}
 
 		// Shift bits to the left
+		data = data << 1;
 
 		// Shift the recorded carry into bit 0
+		data = data | carry;
 
 		// Set the memory to new value
+		self.mem_write(addr, data);
 
 		// Update the processor flags
+		self.update_processor_flags(data);
+	}
 
 	// ROR
 

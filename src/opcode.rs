@@ -148,6 +148,7 @@ lazy_static! {
 		// zero page x
 		// $36
 		// 2 6
+		OpCode::new(0x36, "ROL", 2, 6, AddressingMode::ZeroPageX),
 
 		// absolute
 		// $2E

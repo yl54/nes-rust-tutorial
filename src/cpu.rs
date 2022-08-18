@@ -5793,8 +5793,8 @@ mod test {
 		// 2. Load 1 into X.
 		// 3. Store X in memory.
 		// 4. Perform a right shift on the memory value, the carry bit should be set from this.
-    	// 4. Perform the rotate left on the accumulator value.
-    	// 5. Break.
+    	// 5. Perform the rotate left on the accumulator value.
+    	// 6. Break.
     	cpu.load_and_run(vec![0xa9, 0x7e, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x2a, 0x00]);
 
     	// Check that the a value is expected.
@@ -5818,8 +5818,8 @@ mod test {
 		// Load and run a short program.
 		// 1. Load a positive value into A, it wouldn't become negative after shift.
 		// 2. Load the value onto the first 256 bytes of memory.
-    	// 2. Perform the rotate left on the memory value.
-    	// 3. Break.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
     	cpu.load_and_run(vec![0xa9, 0x08, 0x85, 0x21, 0x26, 0x21, 0x00]);
 
     	// Check that the a value is expected.
@@ -5865,8 +5865,8 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A, it wouldn't become negative after shift.
 		// 2. Load the value onto the first 256 bytes of memory.
-    	// 2. Perform the rotate left on the memory value.
-    	// 3. Break.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x21, 0x26, 0x21, 0x00]);
 
     	// Check that the a value is expected.

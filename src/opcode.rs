@@ -79,7 +79,6 @@ lazy_static! {
 		OpCode::new(0xac, "LDY", 3, 4, AddressingMode::Absolute),
 		OpCode::new(0xbc, "LDY", 3, 4, AddressingMode::AbsoluteX),
 
-
 		// --------- Register Flags -----------
 
 		OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
@@ -153,6 +152,7 @@ lazy_static! {
 		// absolute
 		// $2E
 		// 3 6 
+		OpCode::new(0x2E, "ROL", 3, 6, AddressingMode::Absolute),
 
 		// absolute x
 		// $3E

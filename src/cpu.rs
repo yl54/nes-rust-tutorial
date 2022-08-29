@@ -5662,6 +5662,7 @@ mod test {
     	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc -> 1111 1101 = 0xfd
 
 	// ------- accumulator --------
+
     #[test]
 	fn test_rol_accumulator_happy_path() {
 		// create a cpu
@@ -5811,8 +5812,6 @@ mod test {
 
 	// ------- zero page --------
 
-	// happy path
-    	// 0x08 = 0000 1000  ->  0001 0000 = 0x10
     #[test]
 	fn test_rol_zeropage_happy_path() {
 		// create a cpu
@@ -5833,8 +5832,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_zeropage_zero_carry() {
 		// create a cpu
@@ -5858,8 +5855,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
 	#[test]
 	fn test_rol_zeropage_zero_no_carry() {
 		// create a cpu
@@ -5881,8 +5876,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-    // negative value with carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_zeropage_negative_carry() {
 		// create a cpu
@@ -5907,8 +5900,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative value without carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_zeropage_negative_no_carry() {
 		// create a cpu
@@ -5931,8 +5922,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc
     #[test]
 	fn test_rol_zeropage_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -5954,9 +5943,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc -> 1111 1101 = 0xfd
     #[test]
 	fn test_rol_zeropage_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -5983,8 +5969,6 @@ mod test {
     
 	// ------- zero page x --------
 
-	// happy path
-    	// 0x08 = 0000 1000  ->  0001 0000 = 0x10
     #[test]
 	fn test_rol_zeropagex_happy_path() {
 		// create a cpu
@@ -6006,8 +5990,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
 	#[test]
 	fn test_rol_zeropagex_zero_carry() {
 		// create a cpu
@@ -6032,8 +6014,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_zeropagex_zero_no_carry() {
 		// create a cpu
@@ -6056,8 +6036,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-    // negative value with carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_zeropagex_negative_carry() {
 		// create a cpu
@@ -6083,8 +6061,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative value without carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_zeropagex_negative_no_carry() {
 		// create a cpu
@@ -6108,8 +6084,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc
     #[test]
 	fn test_rol_zeropagex_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -6132,8 +6106,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc -> 1111 1101 = 0xfd
     #[test]
 	fn test_rol_zeropagex_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -6161,8 +6133,6 @@ mod test {
 
 	// ------- absolute --------
 
-	// happy path
-    	// 0x08 = 0000 1000  ->  0001 0000 = 0x10
     #[test]
 	fn test_rol_absolute_happy_path() {
 		// create a cpu
@@ -6183,8 +6153,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_absolute_zero_carry() {
 		// create a cpu
@@ -6208,8 +6176,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-    // 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_absolute_zero_no_carry() {
 		// create a cpu
@@ -6231,9 +6197,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	
-    // negative value with carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_absolute_negative_carry() {
 		// create a cpu
@@ -6258,8 +6221,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative value without carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_absolute_negative_no_carry() {
 		// create a cpu
@@ -6281,10 +6242,6 @@ mod test {
     	// - The zero bit is set.
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
-
-    
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc -> 1111 1101 = 0xfd
 
     #[test]
 	fn test_rol_absolute_middle_bits_set_end_bits_not_set_carry() {
@@ -6310,10 +6267,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
     
-
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc
-
     #[test]
 	fn test_rol_absolute_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -6337,10 +6290,6 @@ mod test {
 
 	// ------- absolute x --------
 
-	// test cases to fulfill for ROL:
-
-	// happy path
-    	// 0x08 = 0000 1000  ->  0001 0000 = 0x10
     #[test]
 	fn test_rol_absolutex_happy_path() {
 		// create a cpu
@@ -6362,8 +6311,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_absolutex_zero_carry() {
 		// create a cpu
@@ -6388,8 +6335,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_absolutex_zero_no_carry() {
 		// create a cpu
@@ -6412,8 +6357,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-    // negative value with carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
     #[test]
 	fn test_rol_absolutex_negative_carry() {
 		// create a cpu
@@ -6439,8 +6382,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
 
-	// negative value without carry set
-    	// 0x80 = 1000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_rol_absolutex_negative_no_carry() {
 		// create a cpu
@@ -6464,8 +6405,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc
     #[test]
 	fn test_rol_absolutex_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -6488,8 +6427,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  1111 1100 = 0xfc -> 1111 1101 = 0xfd
     #[test]
 	fn test_rol_absolutex_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu

@@ -79,7 +79,6 @@ lazy_static! {
 		OpCode::new(0xac, "LDY", 3, 4, AddressingMode::Absolute),
 		OpCode::new(0xbc, "LDY", 3, 4, AddressingMode::AbsoluteX),
 
-
 		// --------- Register Flags -----------
 
 		OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::NoneAddressing),
@@ -118,6 +117,7 @@ lazy_static! {
 		OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
 
 		// Shift Instructions
+
 		// ASL
 		OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::NoneAddressing),
 		OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
@@ -133,6 +133,32 @@ lazy_static! {
 		OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::AbsoluteX),
 
 		// ROL
+
+		// accumulator
+		// $2A
+		// 1 2
+		OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::NoneAddressing),
+
+		// zero page
+		// $26
+		// 2 5
+		OpCode::new(0x26, "ROL", 2, 5, AddressingMode::ZeroPage),
+
+		// zero page x
+		// $36
+		// 2 6
+		OpCode::new(0x36, "ROL", 2, 6, AddressingMode::ZeroPageX),
+
+		// absolute
+		// $2E
+		// 3 6 
+		OpCode::new(0x2E, "ROL", 3, 6, AddressingMode::Absolute),
+
+		// absolute x
+		// $3E
+		// 3 7
+		OpCode::new(0x3E, "ROL", 3, 7, AddressingMode::AbsoluteX),
+
 		// ROR
 	];
 

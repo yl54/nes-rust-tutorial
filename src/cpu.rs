@@ -952,6 +952,45 @@ impl CPU {
 
 	// ROR
 
+	// accumulator
+		// get the value of the accumulator
+
+		// record the current value of the carry
+
+		// check if there is a carry bit to set, bit 0 is the carry bit
+			// if so, then set the carry bit
+
+			// if not, then unset the carry bit
+
+		// shift the bits to the right
+
+		// set the recorded carry onto the 7th bit
+
+		// set the accumulator to the new value
+
+		// update the processor flags
+
+	// memory
+		// get the address to look for
+
+		// get the value from memory
+
+		// record the current value of the carry
+
+		// check if there is a carry bit to set, bit 0 is the carry bit
+			// if so, then set the carry bit
+
+			// if not, then unset the carry bit
+
+		// shift the bits to the right
+
+		// set the recorded carry onto the 7th bit
+
+		// write the new value to memory
+
+		// update the processor flags
+
+
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
 		// Check if the A register is 0.
@@ -6453,4 +6492,29 @@ mod test {
 	}
 
 	// --------- ROR ---------
+
+	// test cases to fulfill for ROL:
+
+	// happy path
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+
+
+	// 0 with carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+
+	// 0 without carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+
+    // 1 with carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 0000 0001 = 0x01
+
+	// 1 without carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+
+    // all middle bits set, end bits not set, no carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+
+	// all middle bits set, end bits not set, carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+
 }

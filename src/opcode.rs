@@ -145,6 +145,7 @@ lazy_static! {
 		// 1
 		// 2
 		// accumulator
+		OpCode::new(0x6A, "ROR", 1, 2, AddressingMode::NoneAddressing),
 
 		// 0x66
 		// 2

@@ -507,6 +507,7 @@ impl CPU {
 
 				// ROR
 				0x6A => self.ror_accumulator(),
+				0x66 => self.ror_memory(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -988,25 +989,42 @@ impl CPU {
 	}
 
 	// memory
+	fn ror_memory(&mut self, mode: &AddressingMode) {
 		// get the address to look for
+		let addr = self.get_operand_address(mode);
 
 		// get the value from memory
+		let mut data = self.mem_read(addr);
 
 		// record the current value of the carry
+		let carry = self.p & 0b0000_0001;
 
 		// check if there is a carry bit to set, bit 0 is the carry bit
+		if data & 0b0000_0001 == 0b0000_0001 {
 			// if so, then set the carry bit
-
+			self.p = self.p | 0b0000_0001;
+		} else {
 			// if not, then unset the carry bit
+			self.p = self.p & 0b1111_1110;
+		}
 
 		// shift the bits to the right
+		data = data >> 1;
 
 		// set the recorded carry onto the 7th bit
+		let mut carry_set = 0x00;
+		if carry == 1 {
+			carry_set = 0x80;
+		}
+
+		data = data | carry_set; 
 
 		// write the new value to memory
+		self.mem_write(addr, data);
 
 		// update the processor flags
-
+		self.update_processor_flags(data);
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -6699,6 +6717,29 @@ mod test {
 	}
 
 	// ------- zero page --------
+
+	// happy path
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    #[test]
+	fn test_ror_zeropage_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x85, 0x21, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.mem[0x0021], 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
 	// ------- zero page x --------
 	// ------- absolute --------
 	// ------- absolute x --------

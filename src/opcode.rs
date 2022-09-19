@@ -151,6 +151,7 @@ lazy_static! {
 		// 2
 		// 5
 		// zero page
+		OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
 
 		// 0x76
 		// 2

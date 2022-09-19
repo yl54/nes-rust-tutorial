@@ -6514,6 +6514,29 @@ mod test {
 
 	// happy path
     	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+
+    // 0 with carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+
+    // 0 without carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+
+	// 1 with carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+
+    // 1 without carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+
+    // all middle bits set, end bits not set, no carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+
+	// all middle bits set, end bits not set, carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+
+	// ------- accumulator --------
+
+	// happy path
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
     #[test]
 	fn test_ror_accumulator_happy_path() {
 		// create a cpu
@@ -6674,4 +6697,10 @@ mod test {
     	// - The negative bit is set.
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
+
+	// ------- zero page --------
+	// ------- zero page x --------
+	// ------- absolute --------
+	// ------- absolute x --------
+
 }

@@ -169,6 +169,7 @@ lazy_static! {
 		// 3
 		// 7		
 		// absolute x
+		OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::AbsoluteX),
 		
 		
 	];

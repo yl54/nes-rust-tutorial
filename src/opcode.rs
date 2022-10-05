@@ -140,38 +140,11 @@ lazy_static! {
 		OpCode::new(0x3E, "ROL", 3, 7, AddressingMode::AbsoluteX),
 
 		// ROR
-
-		// 0x6A
-		// 1
-		// 2
-		// accumulator
 		OpCode::new(0x6A, "ROR", 1, 2, AddressingMode::NoneAddressing),
-
-		// 0x66
-		// 2
-		// 5
-		// zero page
 		OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
-
-		// 0x76
-		// 2
-		// 6		
-		// zero page x
 		OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPageX),
-
-		// 0x6E
-		// 3
-		// 6		
-		// absolute
 		OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
-
-		// 0x7E
-		// 3
-		// 7		
-		// absolute x
 		OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::AbsoluteX),
-		
-		
 	];
 
 	// function to create hash table from code to OpCode

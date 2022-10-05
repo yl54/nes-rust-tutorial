@@ -4113,8 +4113,8 @@ mod test {
     	cpu.run();
 
     	// Check that the processor status is expected.
-    	// - Carry bit is not set.
-    	// - All other bits are set.
+    	// - Carry flag is not set.
+    	// - All other flags are set.
         assert!(cpu.p & 0b1111_1111 == 0b1111_1110);   	
     }
 
@@ -4163,8 +4163,8 @@ mod test {
     	cpu.run();
 
     	// Check that the processor status is expected.
-    	// - Decimal bit is not set.
-    	// - All other bits are set.
+    	// - Decimal flag is not set.
+    	// - All other flags are set.
         assert!(cpu.p & 0b1111_1111 == 0b1011_1111);   	
     }
 
@@ -6553,8 +6553,6 @@ mod test {
 
 	// ------- accumulator --------
 
-	// happy path
-    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
     #[test]
 	fn test_ror_accumulator_happy_path() {
 		// create a cpu
@@ -6574,8 +6572,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_accumulator_zero_carry() {
 		// create a cpu
@@ -6599,8 +6595,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-	// 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_accumulator_zero_no_carry() {
 		// create a cpu
@@ -6621,8 +6615,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-    // 1 with carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_accumulator_one_carry() {
 		// create a cpu
@@ -6647,8 +6639,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0001);
 	}
 
-	// 1 without carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_accumulator_one_no_carry() {
 		// create a cpu
@@ -6670,8 +6660,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
     #[test]
 	fn test_ror_accumulator_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -6691,8 +6679,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
     #[test]
 	fn test_ror_accumulator_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -6718,8 +6704,6 @@ mod test {
 
 	// ------- zero page --------
 
-	// happy path
-    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
     #[test]
 	fn test_ror_zeropage_happy_path() {
 		// create a cpu
@@ -6740,8 +6724,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-    // 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_zeropage_zero_carry() {
 		// create a cpu
@@ -6766,8 +6748,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-    // 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_zeropage_zero_no_carry() {
 		// create a cpu
@@ -6789,8 +6769,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// 1 with carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_zeropage_one_carry() {
 		// create a cpu
@@ -6816,8 +6794,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0001);
 	}
 
-    // 1 without carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_zeropage_one_no_carry() {
 		// create a cpu
@@ -6840,8 +6816,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
     #[test]
 	fn test_ror_zeropage_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -6862,8 +6836,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
     #[test]
 	fn test_ror_zeropage_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -6890,8 +6862,6 @@ mod test {
 
 	// ------- zero page x --------
 
-	// happy path
-    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
     #[test]
 	fn test_ror_zeropagex_happy_path() {
 		// create a cpu
@@ -6913,8 +6883,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-    // 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_zeropagex_zero_carry() {
 		// create a cpu
@@ -6940,8 +6908,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-    // 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_zeropagex_zero_no_carry() {
 		// create a cpu
@@ -6964,8 +6930,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// 1 with carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_zeropagex_one_carry() {
 		// create a cpu
@@ -6992,8 +6956,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0001);
 	}
 
-    // 1 without carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_zeropagex_one_no_carry() {
 		// create a cpu
@@ -7017,8 +6979,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
     #[test]
 	fn test_ror_zeropagex_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -7040,8 +7000,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
     #[test]
 	fn test_ror_zeropagex_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -7069,8 +7027,6 @@ mod test {
 	
 	// ------- absolute --------
 
-	// happy path
-    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
     #[test]
 	fn test_ror_absolute_happy_path() {
 		// create a cpu
@@ -7091,8 +7047,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-    // 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_absolute_zero_carry() {
 		// create a cpu
@@ -7117,8 +7071,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-    // 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_absolute_zero_no_carry() {
 		// create a cpu
@@ -7140,8 +7092,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// 1 with carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_absolute_one_carry() {
 		// create a cpu
@@ -7167,8 +7117,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0001);
 	}
 
-    // 1 without carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_absolute_one_no_carry() {
 		// create a cpu
@@ -7191,8 +7139,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
     #[test]
 	fn test_ror_absolute_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -7213,8 +7159,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
     #[test]
 	fn test_ror_absolute_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu
@@ -7241,8 +7185,6 @@ mod test {
 
 	// ------- absolute x --------
 
-	// happy path
-    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
 	#[test]
 	fn test_ror_absolutex_happy_path() {
 		// create a cpu
@@ -7264,8 +7206,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-    // 0 with carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_absolutex_zero_carry() {
 		// create a cpu
@@ -7291,8 +7231,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
 
-    // 0 without carry bit set
-    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_absolutex_zero_no_carry() {
 		// create a cpu
@@ -7315,8 +7253,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0010);
 	}
 
-	// 1 with carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
     #[test]
 	fn test_ror_absolutex_one_carry() {
 		// create a cpu
@@ -7343,8 +7279,6 @@ mod test {
     	assert_eq!(cpu.p, 0b1000_0001);
 	}
 
-    // 1 without carry set
-    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
     #[test]
 	fn test_ror_absolutex_one_no_carry() {
 		// create a cpu
@@ -7368,8 +7302,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0011);
 	}
 
-    // all middle bits set, end bits not set, no carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
     #[test]
 	fn test_ror_absolutex_middle_bits_set_end_bits_not_set_no_carry() {
 		// create a cpu
@@ -7391,8 +7323,6 @@ mod test {
     	assert_eq!(cpu.p, 0b0000_0000);
 	}
 
-	// all middle bits set, end bits not set, carry bit set
-    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
     #[test]
 	fn test_ror_absolutex_middle_bits_set_end_bits_not_set_carry() {
 		// create a cpu

@@ -145,6 +145,12 @@ lazy_static! {
 		OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPageX),
 		OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
 		OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::AbsoluteX),
+
+		// CMP
+
+		// CPX
+		
+		// CPY
 	];
 
 	// function to create hash table from code to OpCode

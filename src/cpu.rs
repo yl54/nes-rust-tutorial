@@ -509,6 +509,12 @@ impl CPU {
 				0x6A => self.ror_accumulator(),
 				0x66 | 0x76 | 0x6E | 0x7E => self.ror_memory(&code_info.mode),
 
+				// CMP
+
+				// CPX
+
+				// CPY
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -1025,6 +1031,12 @@ impl CPU {
 		// update the processor flags
 		self.update_processor_flags(data);
 	}
+
+	// cmp
+
+	// cpx
+	
+	// cpy
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -6528,7 +6540,7 @@ mod test {
 
 	// --------- ROR ---------
 
-	// test cases to fulfill for ROL:
+	// test cases to fulfill for ROR:
 
 	// happy path
     	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
@@ -7346,5 +7358,17 @@ mod test {
     	// Check that the p register is expected.
     	// - The negative flag is set.
     	assert_eq!(cpu.p, 0b1000_0000);
-	}	
+	}
+
+	// --------- CMP ---------
+
+	// test cases to fulfill for CMP:
+
+	// --------- CPX ---------
+
+	// test cases to fulfill for CPX:
+
+	// --------- CPY ---------
+
+	// test cases to fulfill for CPY:
 }

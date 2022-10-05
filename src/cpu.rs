@@ -506,6 +506,8 @@ impl CPU {
 				0x26 | 0x36 | 0x2E | 0x3E => self.rol_memory(&code_info.mode),
 
 				// ROR
+				0x6A => self.ror_accumulator(),
+				0x66 | 0x76 | 0x6E | 0x7E => self.ror_memory(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -951,6 +953,78 @@ impl CPU {
 	}
 
 	// ROR
+
+	// accumulator
+	fn ror_accumulator(&mut self) {
+		// get the value of the accumulator
+		let mut data = self.a;
+
+		// record the current value of the carry
+		let carry = self.p & 0b0000_0001;
+
+		// check if there is a carry bit to set, bit 0 is the carry bit
+		if data & 0b0000_0001 == 0b0000_0001 {
+			// if so, then set the carry bit
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// if not, then unset the carry bit
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// shift the bits to the right
+		data = data >> 1;
+
+		// check if the carry bit is set
+		let mut carry_set = 0;
+		if carry == 1 {
+			carry_set = 0x80;
+		}
+		data = data | carry_set;
+
+		// set the accumulator to the new value
+		self.a = data;
+
+		// update the processor flags
+		self.update_processor_flags(data);
+	}
+
+	// memory
+	fn ror_memory(&mut self, mode: &AddressingMode) {
+		// get the address to look for
+		let addr = self.get_operand_address(mode);
+
+		// get the value from memory
+		let mut data = self.mem_read(addr);
+
+		// record the current value of the carry
+		let carry = self.p & 0b0000_0001;
+
+		// check if there is a carry bit to set, bit 0 is the carry bit
+		if data & 0b0000_0001 == 0b0000_0001 {
+			// if so, then set the carry bit
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// if not, then unset the carry bit
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// shift the bits to the right
+		data = data >> 1;
+
+		// set the recorded carry onto the 7th bit
+		let mut carry_set = 0x00;
+		if carry == 1 {
+			carry_set = 0x80;
+		}
+
+		data = data | carry_set; 
+
+		// write the new value to memory
+		self.mem_write(addr, data);
+
+		// update the processor flags
+		self.update_processor_flags(data);
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -4039,8 +4113,8 @@ mod test {
     	cpu.run();
 
     	// Check that the processor status is expected.
-    	// - Carry bit is not set.
-    	// - All other bits are set.
+    	// - Carry flag is not set.
+    	// - All other flags are set.
         assert!(cpu.p & 0b1111_1111 == 0b1111_1110);   	
     }
 
@@ -4089,8 +4163,8 @@ mod test {
     	cpu.run();
 
     	// Check that the processor status is expected.
-    	// - Decimal bit is not set.
-    	// - All other bits are set.
+    	// - Decimal flag is not set.
+    	// - All other flags are set.
         assert!(cpu.p & 0b1111_1111 == 0b1011_1111);   	
     }
 
@@ -6453,4 +6527,824 @@ mod test {
 	}
 
 	// --------- ROR ---------
+
+	// test cases to fulfill for ROL:
+
+	// happy path
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+
+    // 0 with carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+
+    // 0 without carry bit set
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+
+	// 1 with carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+
+    // 1 without carry set
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+
+    // all middle bits set, end bits not set, no carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+
+	// all middle bits set, end bits not set, carry bit set
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+
+	// ------- accumulator --------
+
+    #[test]
+	fn test_ror_accumulator_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+    	// 2. Perform the rotate right on the accumulator value.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.a, 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_accumulator_zero_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load 1 into X.
+		// 3. Store X in memory.
+		// 4. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 5. Perform the rotate right on the accumulator value.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+    #[test]
+	fn test_ror_accumulator_zero_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+    	// 2. Perform the rotate right on the accumulator value.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+    #[test]
+	fn test_ror_accumulator_one_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load 1 into X.
+		// 3. Store X in memory.
+		// 4. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 5. Perform the rotate right on the accumulator value.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b1000_0001);
+	}
+
+    #[test]
+	fn test_ror_accumulator_one_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+    	// 2. Perform the rotate right on the accumulator value.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+    #[test]
+	fn test_ror_accumulator_middle_bits_set_end_bits_not_set_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+    	// 2. Perform the rotate right on the accumulator value.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+    	assert_eq!(cpu.a, 0x3f);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_accumulator_middle_bits_set_end_bits_not_set_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load 1 into X.
+		// 3. Store X in memory.
+		// 4. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 5. Perform the rotate right on the accumulator value.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x6a, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+    	assert_eq!(cpu.a, 0xbf);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	// ------- zero page --------
+
+    #[test]
+	fn test_ror_zeropage_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x85, 0x21, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.mem[0x0021], 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropage_zero_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Load 1 into X.
+		// 4. Store X in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate left on the memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x21, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x0021], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropage_zero_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x21, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0021], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+    #[test]
+	fn test_ror_zeropage_one_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Load 1 into X.
+		// 4. Store X in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate left on the memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x85, 0x21, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x0021], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set
+    	// - The carry bit is set
+    	assert_eq!(cpu.p, 0b1000_0001);
+	}
+
+    #[test]
+	fn test_ror_zeropage_one_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x85, 0x21, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0021], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set
+    	// - The carry bit is set
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+    #[test]
+	fn test_ror_zeropage_middle_bits_set_end_bits_not_set_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x85, 0x21, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+    	assert_eq!(cpu.mem[0x0021], 0x3f);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropage_middle_bits_set_end_bits_not_set_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+    	// 2. Load the value onto the first 256 bytes of memory.
+    	// 3. Load 1 into X.
+		// 4. Store X in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate left on the memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x85, 0x21, 0xa2, 0x01, 0x86, 0x02, 0x46, 0x02, 0x66, 0x21, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+    	assert_eq!(cpu.mem[0x0021], 0xbf);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	// ------- zero page x --------
+
+    #[test]
+	fn test_ror_zeropagex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x85, 0x21, 0xa2, 0x01, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.mem[0x0021], 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_zero_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the memory value with 0.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x21, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x0021], 0x80);
+
+    	// Check that the p register is expected.
+   		// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_zero_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x85, 0x21, 0xa2, 0x01, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0021], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_one_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the memory value with 0.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x85, 0x21, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x0021], 0x80);
+
+    	// Check that the p register is expected.
+   		// - The negative bit is set.
+   		// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b1000_0001);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_one_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x85, 0x21, 0xa2, 0x01, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x0021], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_middle_bits_set_end_bits_not_set_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x85, 0x21, 0xa2, 0x01, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+    	assert_eq!(cpu.mem[0x0021], 0x3f);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_zeropagex_middle_bits_set_end_bits_not_set_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value onto the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the memory value with 0.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x85, 0x21, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x76, 0x20, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+    	assert_eq!(cpu.mem[0x0021], 0xbf);
+
+    	// Check that the p register is expected.
+   		// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+	
+	// ------- absolute --------
+
+    #[test]
+	fn test_ror_absolute_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+		// 2. Load the value after the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x8d, 0x21, 0x54, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.mem[0x5421], 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolute_zero_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load 1 into Y.
+		// 4. Store Y in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate right on the first memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x21, 0x54, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x5421], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolute_zero_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value after the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x21, 0x54, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x5421], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+    #[test]
+	fn test_ror_absolute_one_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load 1 into Y.
+		// 4. Store Y in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate right on the first memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x8d, 0x21, 0x54, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x5421], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b1000_0001);
+	}
+
+    #[test]
+	fn test_ror_absolute_one_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load the value after the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x8d, 0x21, 0x54, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x5421], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set
+    	// - The carry bit is set
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+    #[test]
+	fn test_ror_absolute_middle_bits_set_end_bits_not_set_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value after the first 256 bytes of memory.
+    	// 3. Perform the rotate left on the memory value.
+    	// 4. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x8d, 0x21, 0x54, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+    	assert_eq!(cpu.mem[0x5421], 0x3f);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolute_middle_bits_set_end_bits_not_set_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load 1 into Y.
+		// 4. Store Y in memory.
+		// 5. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 6. Perform the rotate right on the first memory value.
+    	// 7. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x8d, 0x21, 0x54, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x6e, 0x21, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+    	assert_eq!(cpu.mem[0x5421], 0xbf);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	// ------- absolute x --------
+
+	#[test]
+	fn test_ror_absolutex_happy_path() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a positive value into A, it wouldn't become negative after shift.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x10, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
+    	assert_eq!(cpu.mem[0x5421], 0x08);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolutex_zero_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the first memory value.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x5421], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative flag is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolutex_zero_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x00 = 0000 0000  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x5421], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+    #[test]
+	fn test_ror_absolutex_one_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the first memory value.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00 -> 1000 0000 = 0x80
+    	assert_eq!(cpu.mem[0x5421], 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative flag is set.
+    	// - The carry flag is set.
+    	assert_eq!(cpu.p, 0b1000_0001);
+	}
+
+    #[test]
+	fn test_ror_absolutex_one_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load one into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x01 = 0000 0001  ->  0000 0000 = 0x00
+    	assert_eq!(cpu.mem[0x5421], 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+    #[test]
+	fn test_ror_absolutex_middle_bits_set_end_bits_not_set_no_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+    	// 4. Perform the rotate right on the memory value.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f
+    	assert_eq!(cpu.mem[0x5421], 0x3f);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+    #[test]
+	fn test_ror_absolutex_middle_bits_set_end_bits_not_set_carry() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value with middle bits set into A.
+		// 2. Load the value after the first 256 bytes of memory.
+		// 3. Load a value into X
+		// 4. Load 1 into Y.
+		// 5. Store Y in memory.
+		// 6. Perform a right shift on the memory value, the carry bit should be set from this.
+    	// 7. Perform the rotate right on the first memory value.
+    	// 8. Break.
+    	cpu.load_and_run(vec![0xa9, 0x7e, 0x8d, 0x21, 0x54, 0xa2, 0x01, 0xa0, 0x01, 0x84, 0x02, 0x46, 0x02, 0x7e, 0x20, 0x54, 0x00]);
+
+    	// Check that the a value is expected.
+    	// 0x7e = 0111 1110  ->  0011 1111 = 0x3f -> 1011 1111 = 0xbf
+    	assert_eq!(cpu.mem[0x5421], 0xbf);
+
+    	// Check that the p register is expected.
+    	// - The negative flag is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}	
 }

@@ -1033,10 +1033,33 @@ impl CPU {
 	}
 
 	// cmp
+	fn cmp(&mut self, mode: &AddressingMode) {
+		self.compare(mode, self.a);
+	}
 
 	// cpx
 	
 	// cpy
+
+	// shared compare function
+	fn compare(&mut self, mode: &AddressingMode, compare_value: u8) {
+		// get the value depending on the mode
+		let addr = self.get_operand_address(mode);
+		let data = self.mem_read(addr);
+
+		// check if the value is less than or equal to a
+		if data <= compare_value { 
+			// if so, set the carry flag
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// unset the carry flag
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// update the n and 0 flags
+		self.update_processor_flags(data);
+	}
+
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -7363,12 +7386,30 @@ mod test {
 	// --------- CMP ---------
 
 	// test cases to fulfill for CMP:
+	// a is less than value
+	// a is equal to value
+	// a is more than value
+
+	// ------- immediate --------
+	// ------- zero page --------
+	// ------- zero page x --------
+	// ------- absolute --------
+	// ------- absolute x --------
+	// ------- absolute y --------
+	// ------- indirect x --------
+	// ------- indirect y --------
 
 	// --------- CPX ---------
 
 	// test cases to fulfill for CPX:
+	// x is less than value
+	// x is equal to value
+	// x is more than value
 
 	// --------- CPY ---------
 
 	// test cases to fulfill for CPY:
+	// y is less than value on memory
+	// y is equal to value on memory
+	// y is more than value on memory
 }

@@ -147,6 +147,46 @@ lazy_static! {
 		OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::AbsoluteX),
 
 		// CMP
+		// immediate
+		// 0xC9
+		// 2
+		// 2
+
+		// zero page
+		// 0xC5
+		// 2
+		// 3
+
+		// zero page x
+		// 0xD5
+		// 2
+		// 4
+
+		// absolute
+		// 0xCD
+		// 3
+		// 4
+
+		// absolute x
+		// 0xDD
+		// 3
+		// 4+
+
+		// absolute y
+		// 0xD9
+		// 3
+		// 4+
+
+		// indirect x
+		// 0xC1
+		// 2
+		// 6
+
+		// indirect y
+		// 0xD1
+		// 2
+		// 5+
+
 
 		// CPX
 		

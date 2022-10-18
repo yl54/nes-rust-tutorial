@@ -510,7 +510,7 @@ impl CPU {
 				0x66 | 0x76 | 0x6E | 0x7E => self.ror_memory(&code_info.mode),
 
 				// CMP
-				0xC9 | 0xC5 | 0xD5 => self.cmp_a(&code_info.mode),
+				0xC9 | 0xC5 | 0xD5 | 0xCD => self.cmp_a(&code_info.mode),
 
 				// CPX
 
@@ -7562,6 +7562,62 @@ mod test {
 	}
 
 	// ------- absolute --------
+
+	#[test]
+	fn test_cmp_absolute_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_absolute_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_absolute_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
 	// ------- absolute x --------
 	// ------- absolute y --------
 	// ------- indirect x --------

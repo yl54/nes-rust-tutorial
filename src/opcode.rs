@@ -151,11 +151,14 @@ lazy_static! {
 		// 0xC9
 		// 2
 		// 2
+		OpCode::new(0xC9, "CMP", 2, 2, AddressingMode::Immediate),
+
 
 		// zero page
 		// 0xC5
 		// 2
 		// 3
+		OpCode::new(0xC5, "CMP", 2, 3, AddressingMode::ZeroPage),
 
 		// zero page x
 		// 0xD5

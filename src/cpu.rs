@@ -510,6 +510,7 @@ impl CPU {
 				0x66 | 0x76 | 0x6E | 0x7E => self.ror_memory(&code_info.mode),
 
 				// CMP
+				0xC9 | 0xC5 => self.cmp_a(&code_info.mode),
 
 				// CPX
 
@@ -1033,7 +1034,7 @@ impl CPU {
 	}
 
 	// cmp
-	fn cmp(&mut self, mode: &AddressingMode) {
+	fn cmp_a(&mut self, mode: &AddressingMode) {
 		self.compare(mode, self.a);
 	}
 
@@ -1047,7 +1048,7 @@ impl CPU {
 		let addr = self.get_operand_address(mode);
 		let data = self.mem_read(addr);
 
-		// check if the value is less than or equal to a
+		// check if the value is less than or equal to the compared value
 		if data <= compare_value { 
 			// if so, set the carry flag
 			self.p = self.p | 0b0000_0001;
@@ -1057,7 +1058,7 @@ impl CPU {
 		}
 
 		// update the n and 0 flags
-		self.update_processor_flags(data);
+		self.update_processor_flags(compare_value.wrapping_sub(data));
 	}
 
 
@@ -7390,8 +7391,116 @@ mod test {
 	// a is equal to value
 	// a is more than value
 
+	// q: do i want to check negative numbers as well?
+
 	// ------- immediate --------
+
+	#[test]
+	fn test_cmp_immediate_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value more than A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x02, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_immediate_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value equal to A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x01, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_immediate_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value less than A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x00, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
 	// ------- zero page --------
+
+	#[test]
+	fn test_cmp_zeropage_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_zeropage_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_zeropage_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
 	// ------- zero page x --------
 	// ------- absolute --------
 	// ------- absolute x --------

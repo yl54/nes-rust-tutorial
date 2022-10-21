@@ -181,6 +181,7 @@ lazy_static! {
 		// 0xD9
 		// 3
 		// 4+
+		OpCode::new(0xD9, "CMP", 3, 4, AddressingMode::AbsoluteY),
 
 		// indirect x
 		// 0xC1

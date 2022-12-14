@@ -509,6 +509,13 @@ impl CPU {
 				0x6A => self.ror_accumulator(),
 				0x66 | 0x76 | 0x6E | 0x7E => self.ror_memory(&code_info.mode),
 
+				// CMP
+				0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp_a(&code_info.mode),
+
+				// CPX
+
+				// CPY
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -1025,6 +1032,35 @@ impl CPU {
 		// update the processor flags
 		self.update_processor_flags(data);
 	}
+
+	// cmp
+	fn cmp_a(&mut self, mode: &AddressingMode) {
+		self.compare(mode, self.a);
+	}
+
+	// cpx
+	
+	// cpy
+
+	// shared compare function
+	fn compare(&mut self, mode: &AddressingMode, compare_value: u8) {
+		// get the value depending on the mode
+		let addr = self.get_operand_address(mode);
+		let data = self.mem_read(addr);
+
+		// check if the value is less than or equal to the compared value
+		if data <= compare_value { 
+			// if so, set the carry flag
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// unset the carry flag
+			self.p = self.p & 0b1111_1110;
+		}
+
+		// update the n and 0 flags
+		self.update_processor_flags(compare_value.wrapping_sub(data));
+	}
+
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -6528,7 +6564,7 @@ mod test {
 
 	// --------- ROR ---------
 
-	// test cases to fulfill for ROL:
+	// test cases to fulfill for ROR:
 
 	// happy path
     	// 0x10 = 0001 0000  ->  0000 1000 = 0x08
@@ -7346,5 +7382,517 @@ mod test {
     	// Check that the p register is expected.
     	// - The negative flag is set.
     	assert_eq!(cpu.p, 0b1000_0000);
-	}	
+	}
+
+	// --------- CMP ---------
+
+	// test cases to fulfill for CMP:
+	// a is less than value
+	// a is equal to value
+	// a is more than value
+
+	// q: do i want to check negative numbers as well?
+
+	// ------- immediate --------
+
+	#[test]
+	fn test_cmp_immediate_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value more than A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x02, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_immediate_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value equal to A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x01, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_immediate_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Compare a value less than A to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xc9, 0x00, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- zero page --------
+
+	#[test]
+	fn test_cmp_zeropage_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_zeropage_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_zeropage_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory. 
+		// 4. Compare the value put in memory with A.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x86, 0x34, 0xc5, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- zero page x --------
+
+	#[test]
+	fn test_cmp_zeropagex_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x86, 0x34, 0xa2, 0x04, 0xd5, 0x30, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_zeropagex_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x86, 0x34, 0xa2, 0x04, 0xd5, 0x30, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_zeropagex_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x86, 0x34, 0xa2, 0x04, 0xd5, 0x30, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- absolute --------
+
+	#[test]
+	fn test_cmp_absolute_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_absolute_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_absolute_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0x34, 0x87, 0xcd, 0x34, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- absolute x --------
+
+	#[test]
+	fn test_cmp_absolutex_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x8e, 0x34, 0x87, 0xa2, 0x03, 0xdd, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_absolutex_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x8e, 0x34, 0x87, 0xa2, 0x03, 0xdd, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_absolutex_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into X.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0x34, 0x87, 0xa2, 0x03, 0xdd, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- absolute y --------
+
+	#[test]
+	fn test_cmp_absolutey_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into Y.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x02, 0x8e, 0x34, 0x87, 0xa0, 0x03, 0xd9, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_absolutey_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into Y.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x01, 0x8e, 0x34, 0x87, 0xa0, 0x03, 0xd9, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_absolutey_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into X.
+		// 3. Load the X value onto memory outside the first 256 bytes.
+		// 4. Load a value into Y.
+		// 5. Compare the value put in memory with A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0x34, 0x87, 0xa0, 0x03, 0xd9, 0x31, 0x87, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- indirect x --------
+
+	#[test]
+	fn test_cmp_indirectx_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the X register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x02, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa2, 0x31, 0xc1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_indirectx_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the X register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x01, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa2, 0x31, 0xc1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_indirectx_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the X register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x00, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa2, 0x31, 0xc1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- indirect y --------
+
+	#[test]
+	fn test_cmp_indirecty_a_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value more than A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the Y register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x02, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa0, 0x31, 0xd1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cmp_indirecty_a_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value equal to A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the Y register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x01, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa0, 0x31, 0xd1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cmp_indirecty_a_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into A.
+		// 2. Load a value less than A into Y. This will be the final result.
+    	// 3. Store the value from the Y register onto memory.
+    	// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+    	// 8. Load a positive value into the Y register.
+    	// 9. Compare the value put in memory with A.
+    	// 10. Break
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x00, 0x8c, 0x63, 0x21, 0xa0, 0x63, 0x84, 0x43, 0xa0, 0x21, 0x84, 0x44, 0xa0, 0x31, 0xd1, 0x12, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// --------- CPX ---------
+
+	// test cases to fulfill for CPX:
+	// x is less than value
+	// x is equal to value
+	// x is more than value
+
+	// --------- CPY ---------
+
+	// test cases to fulfill for CPY:
+	// y is less than value on memory
+	// y is equal to value on memory
+	// y is more than value on memory
 }

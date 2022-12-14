@@ -193,6 +193,7 @@ lazy_static! {
 		// 0xD1
 		// 2
 		// 5+
+		OpCode::new(0xD1, "CMP", 2, 5, AddressingMode::IndirectY),
 
 
 		// CPX

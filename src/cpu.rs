@@ -7726,7 +7726,7 @@ mod test {
 
 		// Load and run a short program.
 		// 1. Load a value into A.
-		// 2. Load a value more than A into X.
+		// 2. Load a value less than A into X.
 		// 3. Load the X value onto memory outside the first 256 bytes.
 		// 4. Load a value into Y.
 		// 5. Compare the value put in memory with A.

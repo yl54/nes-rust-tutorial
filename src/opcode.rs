@@ -161,6 +161,7 @@ lazy_static! {
 		// e0
 		// 2
 		// 2
+		OpCode::new(0xE0, "CMX", 2, 2, AddressingMode::Immediate),
 		
 		// zero page
 		// e4
@@ -171,7 +172,7 @@ lazy_static! {
 		// ec
 		// 3
 		// 4
-		
+
 		// CPY
 	];
 

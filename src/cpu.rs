@@ -513,6 +513,7 @@ impl CPU {
 				0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp_a(&code_info.mode),
 
 				// CPX
+				0xE0 => self.cmp_x(&code_info.mode),
 
 				// CPY
 
@@ -1039,7 +1040,10 @@ impl CPU {
 	}
 
 	// cpx
-	
+	fn cmp_x(&mut self, mode: &AddressingMode) {
+		self.compare(mode, self.x);
+	}
+
 	// cpy
 
 	// shared compare function
@@ -7888,6 +7892,61 @@ mod test {
 	// x is less than value
 	// x is equal to value
 	// x is more than value
+
+	// ------- immediate --------
+
+	#[test]
+	fn test_cpx_immediate_x_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Compare a value more than X to X.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xe0, 0x02, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cpx_immediate_x_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Compare a value equal to X to X.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xe0, 0x01, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cpx_immediate_x_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Compare a value less than X to X.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xe0, 0x00, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
+
+	// ------- zero page --------
+
+	// ------- absolute --------
 
 	// --------- CPY ---------
 

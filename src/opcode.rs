@@ -147,56 +147,30 @@ lazy_static! {
 		OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::AbsoluteX),
 
 		// CMP
-		// immediate
-		// 0xC9
-		// 2
-		// 2
 		OpCode::new(0xC9, "CMP", 2, 2, AddressingMode::Immediate),
-
-		// zero page
-		// 0xC5
-		// 2
-		// 3
 		OpCode::new(0xC5, "CMP", 2, 3, AddressingMode::ZeroPage),
-
-		// zero page x
-		// 0xD5
-		// 2
-		// 4
 		OpCode::new(0xD5, "CMP", 2, 4, AddressingMode::ZeroPageX),
-
-		// absolute
-		// 0xCD
-		// 3
-		// 4
 		OpCode::new(0xCD, "CMP", 3, 4, AddressingMode::Absolute),
-
-		// absolute x
-		// 0xDD
-		// 3
-		// 4+
 		OpCode::new(0xDD, "CMP", 3, 4, AddressingMode::AbsoluteX),
-
-		// absolute y
-		// 0xD9
-		// 3
-		// 4+
 		OpCode::new(0xD9, "CMP", 3, 4, AddressingMode::AbsoluteY),
-
-		// indirect x
-		// 0xC1
-		// 2
-		// 6
 		OpCode::new(0xC1, "CMP", 2, 6, AddressingMode::IndirectX),
-
-		// indirect y
-		// 0xD1
-		// 2
-		// 5+
 		OpCode::new(0xD1, "CMP", 2, 5, AddressingMode::IndirectY),
 
-
 		// CPX
+		// immediate
+		// e0
+		// 2
+		// 2
+		
+		// zero page
+		// e4
+		// 2
+		// 3
+
+		// absolute
+		// ec
+		// 3
+		// 4
 		
 		// CPY
 	];

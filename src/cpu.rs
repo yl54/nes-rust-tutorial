@@ -513,7 +513,7 @@ impl CPU {
 				0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp_a(&code_info.mode),
 
 				// CPX
-				0xE0 | 0xE4 | 0xEC => self.cmp_x(&code_info.mode),
+				0xE0 | 0xE4 | 0xEC => self.cpx(&code_info.mode),
 
 				// CPY
 
@@ -1040,7 +1040,7 @@ impl CPU {
 	}
 
 	// cpx
-	fn cmp_x(&mut self, mode: &AddressingMode) {
+	fn cpx(&mut self, mode: &AddressingMode) {
 		self.compare(mode, self.x);
 	}
 

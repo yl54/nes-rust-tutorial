@@ -173,6 +173,7 @@ lazy_static! {
 		// ec
 		// 3
 		// 4
+		OpCode::new(0xEC, "CPX", 3, 4, AddressingMode::Absolute),
 
 		// CPY
 	];

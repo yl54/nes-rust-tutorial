@@ -513,7 +513,7 @@ impl CPU {
 				0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => self.cmp_a(&code_info.mode),
 
 				// CPX
-				0xE0 => self.cmp_x(&code_info.mode),
+				0xE0 | 0xE4 => self.cmp_x(&code_info.mode),
 
 				// CPY
 
@@ -7945,6 +7945,61 @@ mod test {
 	}
 
 	// ------- zero page --------
+
+	#[test]
+	fn test_cpx_zeropage_x_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Load a value more than X into A.
+		// 3. Load the A value onto memory. 
+		// 4. Compare the value put in memory with X.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0x02, 0x85, 0x34, 0xe4, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cpx_zeropage_x_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Load a value equal to X into A.
+		// 3. Load the A value onto memory. 
+		// 4. Compare the value put in memory with X.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0x01, 0x85, 0x34, 0xe4, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cpx_zeropage_x_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into X.
+		// 2. Load a value less than X into A.
+		// 3. Load the A value onto memory. 
+		// 4. Compare the value put in memory with X.
+    	// 5. Break.
+    	cpu.load_and_run(vec![0xa2, 0x01, 0xa9, 0x00, 0x85, 0x34, 0xe4, 0x34, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
 
 	// ------- absolute --------
 

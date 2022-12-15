@@ -161,12 +161,13 @@ lazy_static! {
 		// e0
 		// 2
 		// 2
-		OpCode::new(0xE0, "CMX", 2, 2, AddressingMode::Immediate),
+		OpCode::new(0xE0, "CPX", 2, 2, AddressingMode::Immediate),
 		
 		// zero page
 		// e4
 		// 2
 		// 3
+		OpCode::new(0xE4, "CPX", 2, 3, AddressingMode::ZeroPage),
 
 		// absolute
 		// ec

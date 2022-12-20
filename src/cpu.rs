@@ -516,6 +516,7 @@ impl CPU {
 				0xE0 | 0xE4 | 0xEC => self.cpx(&code_info.mode),
 
 				// CPY
+				0xC0 => self.cpy(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -8067,4 +8068,55 @@ mod test {
 	// y is less than value on memory
 	// y is equal to value on memory
 	// y is more than value on memory
+
+	// ------- immediate --------
+
+	#[test]
+	fn test_cpy_immediate_y_less_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into Y.
+		// 2. Compare a value more than Y to Y.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa0, 0x01, 0xc0, 0x02, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_cpy_immediate_y_equal_to_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into Y.
+		// 2. Compare a value equal to Y to Y.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa0, 0x01, 0xc0, 0x01, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0011);
+	}
+
+	#[test]
+	fn test_cpy_immediate_y_more_than_value() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load a value into Y.
+		// 2. Compare a value less than Y to Y.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa0, 0x01, 0xc0, 0x00, 0x00]);
+
+    	// Check that the p register is expected.
+    	// - The carry bit is set.
+    	assert_eq!(cpu.p, 0b0000_0001);
+	}
 }

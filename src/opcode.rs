@@ -167,6 +167,7 @@ lazy_static! {
 		// c0
 		// 2
 		// 2
+		OpCode::new(0xC0, "CPY", 2, 2, AddressingMode::Immediate),
 
 		// zero page
 		// c4

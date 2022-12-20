@@ -173,13 +173,13 @@ lazy_static! {
 		// c4
 		// 2
 		// 3
-		OpCode::new(0xC4, "CPX", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0xC4, "CPY", 2, 3, AddressingMode::ZeroPage),
 
 		// absolute
 		// cc
 		// 3
 		// 4
-
+		OpCode::new(0xCC, "CPY", 3, 4, AddressingMode::Absolute),
 
 	];
 

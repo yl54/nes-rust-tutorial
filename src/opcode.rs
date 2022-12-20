@@ -162,25 +162,9 @@ lazy_static! {
 		OpCode::new(0xEC, "CPX", 3, 4, AddressingMode::Absolute),
 
 		// CPY
-
-		// immediate
-		// c0
-		// 2
-		// 2
 		OpCode::new(0xC0, "CPY", 2, 2, AddressingMode::Immediate),
-
-		// zero page
-		// c4
-		// 2
-		// 3
 		OpCode::new(0xC4, "CPY", 2, 3, AddressingMode::ZeroPage),
-
-		// absolute
-		// cc
-		// 3
-		// 4
 		OpCode::new(0xCC, "CPY", 3, 4, AddressingMode::Absolute),
-
 	];
 
 	// function to create hash table from code to OpCode

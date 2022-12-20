@@ -1045,6 +1045,9 @@ impl CPU {
 	}
 
 	// cpy
+	fn cpy(&mut self, mode: &AddressingMode) {
+		self.compare(mode, self.y);
+	}
 
 	// shared compare function
 	fn compare(&mut self, mode: &AddressingMode, compare_value: u8) {

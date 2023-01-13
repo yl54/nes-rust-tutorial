@@ -1040,13 +1040,18 @@ impl CPU {
 
 	// ora
 	fn ora(&mut self, mode: &AddressingMode) {
-		// get the value from based off of the addressing mode
+		// get the address to look for
+		let addr = self.get_operand_address(mode);
 
-		// perform a `accumulator | value` 
+		// get the value from memory
+		let data = self.mem_read(addr);
 
-		// set the a value with the or'd value
+		// perform a `accumulator | value`
+		// set the accumulator value 
+		self.a = self.a | data;
 
 		// update the processor flags with value in a
+		self.update_processor_flags(self.a);
 	}
 
 	// cmp

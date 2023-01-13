@@ -518,6 +518,8 @@ impl CPU {
 				// CPY
 				0xC0 | 0xC4 | 0xCC => self.cpy(&code_info.mode),
 
+				// ORA
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -1034,6 +1036,8 @@ impl CPU {
 		// update the processor flags
 		self.update_processor_flags(data);
 	}
+
+	// ora
 
 	// cmp
 	fn cmp_a(&mut self, mode: &AddressingMode) {
@@ -8233,4 +8237,18 @@ mod test {
     	// - The carry bit is set.
     	assert_eq!(cpu.p, 0b0000_0001);
 	}
+
+	// --------- ORA ---------
+
+	// test cases to fulfill for ORA:
+
+	// ------- immediate --------
+	// ------- zero page --------
+	// ------- zero page x --------
+	// ------- absolute --------
+	// ------- absolute x --------
+	// ------- absolute y --------
+	// ------- indirect x --------
+	// ------- indirect y --------
+
 }

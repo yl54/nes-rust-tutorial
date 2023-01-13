@@ -8256,6 +8256,11 @@ mod test {
 	// --------- ORA ---------
 
 	// test cases to fulfill for ORA:
+	// zero and zero
+	// one and zero
+	// 0x80 and 0x00
+	// 0xff vs zero
+	// 0xff vs 0xff
 
 	// ------- immediate --------
 	// ------- zero page --------

@@ -519,6 +519,7 @@ impl CPU {
 				0xC0 | 0xC4 | 0xCC => self.cpy(&code_info.mode),
 
 				// ORA
+				0x09 => self.ora(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -1038,6 +1039,15 @@ impl CPU {
 	}
 
 	// ora
+	fn ora(&mut self, mode: &AddressingMode) {
+		// get the value from based off of the addressing mode
+
+		// perform a `accumulator | value` 
+
+		// set the a value with the or'd value
+
+		// update the processor flags with value in a
+	}
 
 	// cmp
 	fn cmp_a(&mut self, mode: &AddressingMode) {

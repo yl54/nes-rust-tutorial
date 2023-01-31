@@ -8263,7 +8263,121 @@ mod test {
 	// 0xff vs 0xff
 
 	// ------- immediate --------
+
+	#[test]
+	fn test_ora_immediate_zero_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Bitwise OR zero to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x09, 0x00, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_ora_immediate_one_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Bitwise OR zero to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0x09, 0x00, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_immediate_zero_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Bitwise OR 1 to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x09, 0x01, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_immediate_end_bit_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Bitwise OR 0x08 to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x09, 0x80, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_immediate_all_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Bitwise OR 0xff to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0x09, 0xff, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_immediate_both_all_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0xff into A.
+		// 2. Bitwise OR 0xff to A.
+    	// 3. Break.
+    	cpu.load_and_run(vec![0xa9, 0xff, 0x09, 0xff, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
 	// ------- zero page --------
+	
 	// ------- zero page x --------
 	// ------- absolute --------
 	// ------- absolute x --------

@@ -184,6 +184,7 @@ lazy_static! {
 		// zero page x
 		// 2
 		// 4
+		OpCode::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPageX),
 
 
 		// 0x0D

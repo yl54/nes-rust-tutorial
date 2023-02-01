@@ -519,7 +519,7 @@ impl CPU {
 				0xC0 | 0xC4 | 0xCC => self.cpy(&code_info.mode),
 
 				// ORA
-				0x09 | 0x05 => self.ora(&code_info.mode),
+				0x09 | 0x05 | 0x15 => self.ora(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -8503,6 +8503,137 @@ mod test {
 	}
 
 	// ------- zero page x --------
+
+	#[test]
+	fn test_ora_zeropagex_zero_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load zero into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0x00, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_ora_zeropagex_one_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load zero into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x00, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_zeropagex_zero_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+		// 2. Load 1 into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0x01, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_zeropagex_end_bit_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+		// 2. Load 0x80 into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0x80, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_zeropagex_all_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0 into A.
+		// 2. Load 0xff into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0xff, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_zeropagex_both_all_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0xff into A.
+		// 2. Load 0xff into Y.
+		// 3. Load Y into the first 256 bytes.
+		// 4. Load a small value into X.
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0xff, 0xa0, 0xff, 0x84, 0x04, 0xa2, 0x01, 0x15, 0x03, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
 	// ------- absolute --------
 	// ------- absolute x --------
 	// ------- absolute y --------

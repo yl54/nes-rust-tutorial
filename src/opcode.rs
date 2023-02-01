@@ -191,6 +191,7 @@ lazy_static! {
 		// absolute
 		// 3
 		// 4
+		OpCode::new(0x0D, "ORA", 3, 4, AddressingMode::Absolute),
 
 
 		// 0x1D

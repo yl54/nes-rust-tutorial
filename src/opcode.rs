@@ -186,18 +186,17 @@ lazy_static! {
 		// 4
 		OpCode::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPageX),
 
-
 		// 0x0D
 		// absolute
 		// 3
 		// 4
 		OpCode::new(0x0D, "ORA", 3, 4, AddressingMode::Absolute),
 
-
 		// 0x1D
 		// absolute x
 		// 3
 		// 4+
+		OpCode::new(0x1D, "ORA", 3, 4, AddressingMode::AbsoluteX),
 
 		// 0x19
 		// absolute y

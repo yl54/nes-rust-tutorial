@@ -519,7 +519,7 @@ impl CPU {
 				0xC0 | 0xC4 | 0xCC => self.cpy(&code_info.mode),
 
 				// ORA
-				0x09 | 0x05 | 0x15 | 0x0D => self.ora(&code_info.mode),
+				0x09 | 0x05 | 0x15 | 0x0D | 0x1D => self.ora(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -8644,9 +8644,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load zero into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x00, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8665,9 +8665,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load 1 into A.
 		// 2. Load zero into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8685,9 +8685,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load 1 into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x01, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8705,9 +8705,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load 0x80 into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x80, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8726,9 +8726,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load ff into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0xff, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8747,9 +8747,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load 0xff into A.
 		// 2. Load 0xff into X.
-		// 2. Load X outside the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0xff, 0xa2, 0xff, 0x8e, 0xa3, 0x04, 0x0d, 0xa3, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8761,6 +8761,137 @@ mod test {
 	}
 
 	// ------- absolute x --------
+
+	#[test]
+	fn test_ora_absolutex_zero_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load zero into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x00, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_ora_absolutex_one_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load zero into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_absolutex_zero_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load 1 into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x01, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_absolutex_end_bit_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load 0x80 into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x80, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_absolutex_all_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load 0xff into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0xff, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_absolutex_both_all_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0xff into A.
+		// 2. Load 0xff into X.
+		// 3. Load X outside the first 256 bytes.
+		// 4. Load a small value into x
+		// 5. Bitwise OR the memory value to A.
+    	// 6. Break.
+    	cpu.load_and_run(vec![0xa9, 0xff, 0xa2, 0xff, 0x8e, 0xa3, 0x04, 0xa2, 0x02, 0x1d, 0xa1, 0x04, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
 	// ------- absolute y --------
 	// ------- indirect x --------
 	// ------- indirect y --------

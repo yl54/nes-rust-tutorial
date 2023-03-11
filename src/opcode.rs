@@ -208,6 +208,7 @@ lazy_static! {
 		// indirect x
 		// 2
 		// 6
+		OpCode::new(0x01, "ORA", 2, 6, AddressingMode::IndirectX),
 
 		// 0x11
 		// indirect y

@@ -519,7 +519,7 @@ impl CPU {
 				0xC0 | 0xC4 | 0xCC => self.cpy(&code_info.mode),
 
 				// ORA
-				0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 => self.ora(&code_info.mode),
+				0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&code_info.mode),
 
 				// Handle ops code NOP (0xEA)
 				0xEA => {
@@ -9189,4 +9189,164 @@ mod test {
 
 	// ------- indirect y --------
 
+	// test cases to fulfill for ORA:
+	// zero and zero
+	// one and zero, this is to test that its symmetrical
+	// 0x80 and 0x00
+	// 0xff vs zero
+	// 0xff vs 0xff
+
+	#[test]
+	fn test_ora_indirecty_zero_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load zero into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0x00, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x00);
+
+    	// Check that the p register is expected.
+    	// - The zero bit is set.
+    	assert_eq!(cpu.p, 0b0000_0010);
+	}
+
+	#[test]
+	fn test_ora_indirecty_one_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 1 into A.
+		// 2. Load zero into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0x01, 0xa0, 0x00, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_indirecty_zero_one() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load zero into A.
+		// 2. Load 1 into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0x00, 0xa0, 0x01, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x01);
+
+    	// Check that the p register is expected.
+    	assert_eq!(cpu.p, 0b0000_0000);
+	}
+
+	#[test]
+	fn test_ora_indirecty_end_bit_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0x80 into A.
+		// 2. Load 0 into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0x80, 0xa0, 0x00, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0x80);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_indirecty_all_set_zero() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0xff into A.
+		// 2. Load 0 into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0xff, 0xa0, 0x00, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
+
+	#[test]
+	fn test_ora_indirecty_both_all_set() {
+		// create a cpu
+		let mut cpu = CPU::new();
+
+		// Load and run a short program.
+		// 1. Load 0xff into A.
+		// 2. Load 0xff into Y. This will be the final compare value.
+		// 3. Store the value from the Y register onto memory.
+		// 4. Load a positive value into the Y register. This will be the first address value stored on the indirect address.
+    	// 5. Store the value from the Y register onto memory on an adjacent space.
+    	// 6. Load a positive value into the Y register. This will be the second address value stored on the indirect address.
+    	// 7. Store the value from the Y register onto memory on an adjacent space.
+		// 8. Load a small value into Y.
+		// 9. Bitwise OR the memory value to A.
+    	// 10. Break.
+    	cpu.load_and_run(vec![0xa9, 0xff, 0xa0, 0xff, 0x8c, 0xe3, 0x04, 0xa0, 0xe3, 0x84, 0x23, 0xa0, 0x04, 0x84, 0x24, 0xa0, 0x11, 0x11, 0x12, 0x00]);
+
+    	// check the A register is expected
+    	assert_eq!(cpu.a, 0xff);
+
+    	// Check that the p register is expected.
+    	// - The negative bit is set.
+    	assert_eq!(cpu.p, 0b1000_0000);
+	}
 }

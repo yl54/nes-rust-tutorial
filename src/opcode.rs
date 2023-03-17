@@ -214,6 +214,7 @@ lazy_static! {
 		// indirect y
 		// 2
 		// 5+
+		OpCode::new(0x11, "ORA", 2, 5, AddressingMode::IndirectY),
 	];
 
 	// function to create hash table from code to OpCode

@@ -8386,9 +8386,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load zero into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x00, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8407,9 +8407,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load 1 into A.
 		// 2. Load zero into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x01, 0xa2, 0x00, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8427,9 +8427,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load 1 into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x01, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8447,9 +8447,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load 0x80 into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0x80, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8468,9 +8468,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load zero into A.
 		// 2. Load 0xff into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0x00, 0xa2, 0xff, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -8489,9 +8489,9 @@ mod test {
 		// Load and run a short program.
 		// 1. Load 0xff into A.
 		// 2. Load 0xff into X.
-		// 2. Load X into the first 256 bytes.
-		// 2. Bitwise OR the memory value to A.
-    	// 3. Break.
+		// 3. Load X into the first 256 bytes.
+		// 4. Bitwise OR the memory value to A.
+    	// 5. Break.
     	cpu.load_and_run(vec![0xa9, 0xff, 0xa2, 0xff, 0x86, 0x04, 0x05, 0x04, 0x00]);
 
     	// check the A register is expected
@@ -9026,13 +9026,6 @@ mod test {
 
 	// ------- indirect x --------
 
-	// test cases to fulfill for ORA:
-	// zero and zero
-	// one and zero, this is to test that its symmetrical
-	// 0x80 and 0x00
-	// 0xff vs zero
-	// 0xff vs 0xff
-
 	#[test]
 	fn test_ora_indirectx_zero_zero() {
 		// create a cpu
@@ -9188,13 +9181,6 @@ mod test {
 	}
 
 	// ------- indirect y --------
-
-	// test cases to fulfill for ORA:
-	// zero and zero
-	// one and zero, this is to test that its symmetrical
-	// 0x80 and 0x00
-	// 0xff vs zero
-	// 0xff vs 0xff
 
 	#[test]
 	fn test_ora_indirecty_zero_zero() {

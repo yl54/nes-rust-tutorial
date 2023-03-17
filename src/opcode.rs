@@ -167,53 +167,13 @@ lazy_static! {
 		OpCode::new(0xCC, "CPY", 3, 4, AddressingMode::Absolute),
 
 		// ORA
-
-		// 0x09
-		// immediate
-		// 2
-		// 2
 		OpCode::new(0x09, "ORA", 2, 2, AddressingMode::Immediate),
-
-		// 0x05
-		// zero page
-		// 2
-		// 3
 		OpCode::new(0x05, "ORA", 2, 3, AddressingMode::ZeroPage),
-
-		// 0x15
-		// zero page x
-		// 2
-		// 4
 		OpCode::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPageX),
-
-		// 0x0D
-		// absolute
-		// 3
-		// 4
 		OpCode::new(0x0D, "ORA", 3, 4, AddressingMode::Absolute),
-
-		// 0x1D
-		// absolute x
-		// 3
-		// 4+
 		OpCode::new(0x1D, "ORA", 3, 4, AddressingMode::AbsoluteX),
-
-		// 0x19
-		// absolute y
-		// 3
-		// 4+
 		OpCode::new(0x19, "ORA", 3, 4, AddressingMode::AbsoluteY),
-
-		// 0x01
-		// indirect x
-		// 2
-		// 6
 		OpCode::new(0x01, "ORA", 2, 6, AddressingMode::IndirectX),
-
-		// 0x11
-		// indirect y
-		// 2
-		// 5+
 		OpCode::new(0x11, "ORA", 2, 5, AddressingMode::IndirectY),
 	];
 

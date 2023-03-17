@@ -165,6 +165,16 @@ lazy_static! {
 		OpCode::new(0xC0, "CPY", 2, 2, AddressingMode::Immediate),
 		OpCode::new(0xC4, "CPY", 2, 3, AddressingMode::ZeroPage),
 		OpCode::new(0xCC, "CPY", 3, 4, AddressingMode::Absolute),
+
+		// ORA
+		OpCode::new(0x09, "ORA", 2, 2, AddressingMode::Immediate),
+		OpCode::new(0x05, "ORA", 2, 3, AddressingMode::ZeroPage),
+		OpCode::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPageX),
+		OpCode::new(0x0D, "ORA", 3, 4, AddressingMode::Absolute),
+		OpCode::new(0x1D, "ORA", 3, 4, AddressingMode::AbsoluteX),
+		OpCode::new(0x19, "ORA", 3, 4, AddressingMode::AbsoluteY),
+		OpCode::new(0x01, "ORA", 2, 6, AddressingMode::IndirectX),
+		OpCode::new(0x11, "ORA", 2, 5, AddressingMode::IndirectY),
 	];
 
 	// function to create hash table from code to OpCode

@@ -521,6 +521,8 @@ impl CPU {
 				// ORA
 				0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&code_info.mode),
 
+				// ADC
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -1068,6 +1070,8 @@ impl CPU {
 	fn cpy(&mut self, mode: &AddressingMode) {
 		self.compare(mode, self.y);
 	}
+
+	// adc
 
 	// shared compare function
 	fn compare(&mut self, mode: &AddressingMode, compare_value: u8) {
@@ -9335,4 +9339,9 @@ mod test {
     	// - The negative bit is set.
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
+
+	// --------- ADC ---------
+
+	// test cases to fulfill for ADC:
+
 }

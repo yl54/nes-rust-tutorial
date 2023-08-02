@@ -1071,8 +1071,6 @@ impl CPU {
 		self.compare(mode, self.y);
 	}
 
-	// adc
-
 	// shared compare function
 	fn compare(&mut self, mode: &AddressingMode, compare_value: u8) {
 		// get the value depending on the mode
@@ -1092,6 +1090,18 @@ impl CPU {
 		self.update_processor_flags(compare_value.wrapping_sub(data));
 	}
 
+	// adc
+		// get the value depending on the mode
+
+		// get the value on carry
+
+		// perform the accumulator value + carry + memory value
+
+		// check if carry needs to be set
+
+		// check of overflow needs to be set
+
+		// update processor flags 
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -9343,5 +9353,14 @@ mod test {
 	// --------- ADC ---------
 
 	// test cases to fulfill for ADC:
+	add 0 to 0
+	add 0 to 1
+	add 1 to 0
+	add 0 to 0 + carry already set
+	add 0 to 1 + carry already set
+	add 0xfe to 1 + carry already set
+	add 0xff to 1
+	add 0x80 to 1
+
 
 }

@@ -521,6 +521,8 @@ impl CPU {
 				// ORA
 				0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => self.ora(&code_info.mode),
 
+				// ADC
+
 				// Handle ops code NOP (0xEA)
 				0xEA => {
 					// do nothing
@@ -1088,6 +1090,18 @@ impl CPU {
 		self.update_processor_flags(compare_value.wrapping_sub(data));
 	}
 
+	// adc
+		// get the value depending on the mode
+
+		// get the value on carry
+
+		// perform the accumulator value + carry + memory value
+
+		// check if carry needs to be set
+
+		// check of overflow needs to be set
+
+		// update processor flags 
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -9335,4 +9349,18 @@ mod test {
     	// - The negative bit is set.
     	assert_eq!(cpu.p, 0b1000_0000);
 	}
+
+	// --------- ADC ---------
+
+	// test cases to fulfill for ADC:
+	add 0 to 0
+	add 0 to 1
+	add 1 to 0
+	add 0 to 0 + carry already set
+	add 0 to 1 + carry already set
+	add 0xfe to 1 + carry already set
+	add 0xff to 1
+	add 0x80 to 1
+
+
 }

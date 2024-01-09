@@ -1091,17 +1091,33 @@ impl CPU {
 	}
 
 	// adc
+	fn adc(&mut self, mode: &AddressingMode) {
 		// get the value depending on the mode
+		let addr = self.get_operand_address(mode);
+		let data = self.mem_read(addr);
 
 		// get the value on carry
+		let carry = self.p & 0b0000_0001;
 
 		// perform the accumulator value + carry + memory value
+		self.a = self.a + carry + data;
 
 		// check if carry needs to be set
+		// check if there is a carry bit to set, bit 0 is the carry bit
+		if self.a & 0b0000_0001 == 0b0000_0001 {
+			// if so, then set the carry bit
+			self.p = self.p | 0b0000_0001;
+		} else {
+			// if not, then unset the carry bit
+			self.p = self.p & 0b1111_1110;
+		}
 
-		// check of overflow needs to be set
+		// check if overflow needs to be set
+		
 
-		// update processor flags 
+		// update processor flags
+		self.update_processor_flags(self.a);
+	}
 
 	// update_processor_flags change the Processor Status Flags based off of the new A values
 	fn update_processor_flags(&mut self, result: u8) {
@@ -9353,6 +9369,7 @@ mod test {
 	// --------- ADC ---------
 
 	// test cases to fulfill for ADC:
+	/*
 	add 0 to 0
 	add 0 to 1
 	add 1 to 0
@@ -9360,7 +9377,8 @@ mod test {
 	add 0 to 1 + carry already set
 	add 0xfe to 1 + carry already set
 	add 0xff to 1
+	add 0x7e to 1
 	add 0x80 to 1
-
+	*/
 
 }

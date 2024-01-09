@@ -178,6 +178,8 @@ lazy_static! {
 
 		// ADC
 		// Immediate     ADC #$44      $69  2   2
+		OpCode::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),
+
 		// Zero Page     ADC $44       $65  2   3
 		// Zero Page,X   ADC $44,X     $75  2   4
 		// Absolute      ADC $4400     $6D  3   4
